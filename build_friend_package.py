@@ -265,6 +265,10 @@ def main() -> int:
     if not (built_onedir / APP_BINARY).is_file():
         raise RuntimeError(f"onedir build did not produce {built_onedir / APP_BINARY}")
     shutil.move(str(built_onedir), str(app_version_dir))
+    for destination in (dist, app_version_dir):
+        for notice in ("LICENSE", "THIRD_PARTY_NOTICES.md"):
+            shutil.copy2(ROOT / notice, destination / notice)
+        shutil.copytree(ROOT / "licenses", destination / "licenses")
     (app_dir / "current.json").write_text(
         json.dumps(
             {"schema": 1, "version": APP_VERSION},

@@ -1,0 +1,56 @@
+name: Build Windows Package
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "22"
+      - name: Install Python build dependencies
+        run: python -m pip install -r requirements-build.txt
+      - name: Unit tests
+        run: python -m unittest -v
+      - name: Check Inno Setup compiler
+        shell: pwsh
+        run: |
+          $compiler = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path -LiteralPath $compiler)) { throw 'Inno Setup 6 is required on the runner' }
+          "INNO_SETUP_COMPILER=$compiler" >> $env:GITHUB_ENV
+      - name: Build without installing
+        run: python build_friend_package.py
+      - name: Verify release hashes
+        shell: pwsh
+        run: |
+          $release = 'artifacts/local-package/release'
+          $manifest = Get-Content "$release/version.json" -Raw | ConvertFrom-Json
+          foreach ($keys in @(
+            @('file','file_size','file_sha256'),
+            @('launcher_file','launcher_size','launcher_sha256'),
+            @('package_file','package_size','package_sha256'),
+            @('download_file','download_size','download_sha256'),
+            @('installer_file','installer_size','installer_sha256')
+          )) {
+            $file = Get-Item (Join-Path $release $manifest.($keys[0]))
+            if ($file.Length -ne $manifest.($keys[1])) { throw "Size mismatch: $($file.Name)" }
+            if ((Get-FileHash $file.FullName -Algorithm SHA256).Hash.ToLower() -ne $manifest.($keys[2])) { throw "Hash mismatch: $($file.Name)" }
+          }
+      - name: Upload source-build packages
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: delta-stats-book-windows-source-build
+          path: artifacts/local-package/release/
+          retention-days: 14

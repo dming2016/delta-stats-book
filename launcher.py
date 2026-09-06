@@ -163,24 +163,35 @@ def launch_app(
 
 
 def schedule_launcher_replacement(staged: Path, current: Path) -> subprocess.Popen:
-    script = staged.with_suffix(".cmd")
+    staged = staged.resolve()
+    current = current.resolve()
+    if staged.parent != current.parent / ".updates":
+        raise RuntimeError("暂存启动器不在当前安装目录的更新区")
+    script = staged.with_suffix(".ps1")
     log_path = Path(LOGGER.handlers[0].baseFilename)
     script.write_text(
-        "@echo off\n"
-        "setlocal\n"
-        "for /L %%I in (1,1,120) do (\n"
-        f'  move /Y "{staged}" "{current}" >nul 2>&1 && goto replaced\n'
-        "  >nul 2>&1 ping 127.0.0.1 -n 2\n"
-        ")\n"
-        f'echo %date% %time% launcher replacement failed>>"{log_path}"\n'
-        "exit /b 1\n"
-        ":replaced\n"
-        "del \"%~f0\" & exit /b 0\n",
-        encoding="mbcs",
+        "$ErrorActionPreference = 'Stop'\n"
+        "for ($attempt = 0; $attempt -lt 120; $attempt++) {\n"
+        "  try {\n"
+        "    Move-Item -LiteralPath $env:DELTA_REPLACE_SOURCE -Destination $env:DELTA_REPLACE_TARGET -Force\n"
+        "    Remove-Item -LiteralPath $PSCommandPath -ErrorAction SilentlyContinue\n"
+        "    exit 0\n"
+        "  } catch { Start-Sleep -Seconds 1 }\n"
+        "}\n"
+        "Add-Content -LiteralPath $env:DELTA_REPLACE_LOG -Value ((Get-Date -Format o) + ' launcher replacement failed') -Encoding UTF8\n"
+        "exit 1\n",
+        encoding="ascii",
     )
+    environment = {
+        **os.environ,
+        "DELTA_REPLACE_SOURCE": str(staged),
+        "DELTA_REPLACE_TARGET": str(current),
+        "DELTA_REPLACE_LOG": str(log_path),
+    }
     return subprocess.Popen(
-        ["cmd.exe", "/d", "/c", str(script)],
+        ["powershell.exe", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", str(script)],
         cwd=str(current.parent),
+        env=environment,
         creationflags=CREATE_NO_WINDOW,
     )
 

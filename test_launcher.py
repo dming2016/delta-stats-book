@@ -86,7 +86,7 @@ class LauncherTests(unittest.TestCase):
         )
 
     def test_self_replacement_supports_chinese_install_paths(self) -> None:
-        with tempfile.TemporaryDirectory(prefix="三角洲更新测试-") as temp_dir:
+        with tempfile.TemporaryDirectory(prefix="三角洲更新测试-!%-") as temp_dir:
             root = Path(temp_dir)
             current = root / "三角洲情报助手.exe"
             staged = root / ".updates" / "launcher-1.6.0.exe"
@@ -103,9 +103,36 @@ class LauncherTests(unittest.TestCase):
             self.assertFalse(staged.exists())
             process.wait(timeout=5)
 
+    @patch("launcher.subprocess.Popen")
+    def test_replacement_script_uses_ascii_and_unicode_environment(self, popen) -> None:
+        with tempfile.TemporaryDirectory(prefix="路径-!%-") as directory:
+            root = Path(directory).resolve()
+            staged = root / ".updates" / "launcher.exe"
+            staged.parent.mkdir()
+            staged.write_bytes(b"new")
+            current = root / "三角洲情报助手.exe"
+            schedule_launcher_replacement(staged, current)
+            text = staged.with_suffix(".ps1").read_text(encoding="ascii")
+            self.assertIn("Move-Item -LiteralPath", text)
+            self.assertNotIn(str(staged), text)
+            self.assertEqual(popen.call_args.kwargs["env"]["DELTA_REPLACE_SOURCE"], str(staged))
+            self.assertEqual(popen.call_args.kwargs["env"]["DELTA_REPLACE_TARGET"], str(current))
+            self.assertEqual(popen.call_args.args[0][0], "powershell.exe")
+            self.assertEqual(popen.call_args.kwargs["creationflags"], CREATE_NO_WINDOW)
+
+    @patch("launcher.subprocess.Popen")
+    def test_replacement_rejects_stage_outside_install_update_directory(self, popen) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            staged = root / "outside.exe"
+            with self.assertRaisesRegex(RuntimeError, "更新区"):
+                schedule_launcher_replacement(staged, root / "launcher.exe")
+            self.assertFalse(staged.with_suffix(".ps1").exists())
+            popen.assert_not_called()
+
     def test_resolve_active_app_prefers_valid_current_pointer(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
+            root = Path(temporary).resolve()
             legacy = root / "app" / "DeltaStatsApp.exe"
             current = root / "app" / "versions" / "1.6.0" / "DeltaStatsApp.exe"
             current.parent.mkdir(parents=True)
@@ -122,7 +149,7 @@ class LauncherTests(unittest.TestCase):
 
     def test_resolve_active_app_falls_back_when_pointer_target_is_missing(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
+            root = Path(temporary).resolve()
             legacy = root / "app" / "DeltaStatsApp.exe"
             legacy.parent.mkdir(parents=True)
             legacy.write_bytes(b"legacy")
@@ -137,7 +164,7 @@ class LauncherTests(unittest.TestCase):
 
     def test_resolve_active_app_uses_previous_version_before_legacy(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
+            root = Path(temporary).resolve()
             previous = root / "app" / "versions" / "1.5.9" / "DeltaStatsApp.exe"
             legacy = root / "app" / "DeltaStatsApp.exe"
             previous.parent.mkdir(parents=True)
@@ -157,7 +184,7 @@ class LauncherTests(unittest.TestCase):
 
     def test_non_object_version_pointers_are_ignored(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
-            pointer = Path(temporary) / "current.json"
+            pointer = Path(temporary).resolve() / "current.json"
             for payload in ("null", "[]", '"1.8.4"'):
                 with self.subTest(payload=payload):
                     pointer.write_text(payload, encoding="utf-8")
@@ -168,7 +195,7 @@ class LauncherTests(unittest.TestCase):
     @patch("launcher.install_root")
     def test_normal_start_never_checks_the_network(self, root_mock, launch_mock, _running) -> None:
         with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
+            root = Path(temporary).resolve()
             app = root / "app" / "DeltaStatsApp.exe"
             app.parent.mkdir(parents=True)
             app.write_bytes(b"app")
@@ -195,7 +222,7 @@ class LauncherTests(unittest.TestCase):
     ) -> None:
         launch_mock.side_effect = [RuntimeError("current failed"), object()]
         with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
+            root = Path(temporary).resolve()
             root_mock.return_value = root
             current = root / "app" / "versions" / "1.8.4" / "DeltaStatsApp.exe"
             previous = root / "app" / "versions" / "1.8.3" / "DeltaStatsApp.exe"
@@ -230,7 +257,7 @@ class LauncherTests(unittest.TestCase):
     ) -> None:
         launch_mock.side_effect = launcher.ProcessTreeTerminationError("cannot stop")
         with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
+            root = Path(temporary).resolve()
             root_mock.return_value = root
             current = root / "app" / "versions" / "1.8.4" / "DeltaStatsApp.exe"
             previous = root / "app" / "versions" / "1.8.3" / "DeltaStatsApp.exe"
@@ -282,7 +309,7 @@ class LauncherTests(unittest.TestCase):
         self, launch_mock, sync_mock, wait_mock, _running, root_mock
     ) -> None:
         with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
+            root = Path(temporary).resolve()
             root_mock.return_value = root
             legacy = root / "app" / "DeltaStatsApp.exe"
             legacy.parent.mkdir(parents=True)
@@ -307,7 +334,7 @@ class LauncherTests(unittest.TestCase):
     ) -> None:
         launch_mock.side_effect = [RuntimeError("candidate failed"), object()]
         with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
+            root = Path(temporary).resolve()
             root_mock.return_value = root
             old = root / "app" / "versions" / "1.5.9" / "DeltaStatsApp.exe"
             old.parent.mkdir(parents=True)
@@ -341,7 +368,7 @@ class LauncherTests(unittest.TestCase):
         root_mock,
     ) -> None:
         with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
+            root = Path(temporary).resolve()
             root_mock.return_value = root
             pending = self._pending(root, "1.6.0")
             with self.assertRaisesRegex(OSError, "pointer write failed"):
@@ -352,7 +379,7 @@ class LauncherTests(unittest.TestCase):
     @patch("launcher._wait_for_process_exit")
     def test_pending_rejects_remote_controlled_entrypoint(self, _wait_mock, root_mock) -> None:
         with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
+            root = Path(temporary).resolve()
             root_mock.return_value = root
             pending = self._pending(root, "1.6.0", entrypoint="other.exe")
             with self.assertRaisesRegex(RuntimeError, "入口"):
@@ -368,7 +395,7 @@ class LauncherTests(unittest.TestCase):
         self, write_mock, launch_mock, sync_mock, _wait_mock, _running, root_mock
     ) -> None:
         with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
+            root = Path(temporary).resolve()
             root_mock.return_value = root
             pending = self._pending(root, "1.6.0")
             with patch.object(Path, "unlink", side_effect=OSError("locked")):
@@ -380,8 +407,8 @@ class LauncherTests(unittest.TestCase):
     @patch("launcher.install_root")
     def test_pending_rejects_a_different_install_root(self, root_mock) -> None:
         with tempfile.TemporaryDirectory() as first, tempfile.TemporaryDirectory() as second:
-            expected_root = Path(first)
-            other_root = Path(second)
+            expected_root = Path(first).resolve()
+            other_root = Path(second).resolve()
             root_mock.return_value = expected_root
             pending = self._pending(other_root, "1.6.0")
             with self.assertRaisesRegex(RuntimeError, "当前安装目录"):
@@ -396,7 +423,7 @@ class LauncherTests(unittest.TestCase):
     ) -> None:
         launch_mock.side_effect = launcher.ProcessTreeTerminationError("cannot stop")
         with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
+            root = Path(temporary).resolve()
             root_mock.return_value = root
             old = root / "app" / "versions" / "1.5.9" / "DeltaStatsApp.exe"
             old.parent.mkdir(parents=True)
@@ -418,7 +445,7 @@ class LauncherTests(unittest.TestCase):
     @patch("launcher._wait_for_process_exit")
     def test_pending_rejects_corrupted_staged_launcher(self, _wait_mock, root_mock) -> None:
         with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
+            root = Path(temporary).resolve()
             root_mock.return_value = root
             stage = root / ".updates" / "launcher-1.6.0.exe"
             stage.parent.mkdir()
@@ -436,7 +463,7 @@ class LauncherTests(unittest.TestCase):
 
     def test_frozen_launcher_uses_its_physical_install_root(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
+            root = Path(temporary).resolve()
             staged = root / ".updates" / "launcher.exe"
             pending = root / "app" / "pending.json"
             pending.parent.mkdir(parents=True)
@@ -450,7 +477,7 @@ class LauncherTests(unittest.TestCase):
 
     def test_portable_root_named_updates_is_not_treated_as_staged_launcher(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary) / ".updates"
+            root = Path(temporary).resolve() / ".updates"
             executable = root / launcher.LAUNCHER_BINARY
             executable.parent.mkdir()
             with (

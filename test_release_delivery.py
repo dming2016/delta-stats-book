@@ -154,6 +154,9 @@ class ReleaseDeliveryTests(unittest.TestCase):
                 package_files = set(package_zip.namelist())
             self.assertIn("DeltaStatsApp.exe", package_files)
             self.assertIn("_internal/runtime.bin", package_files)
+            self.assertIn("LICENSE", package_files)
+            self.assertIn("THIRD_PARTY_NOTICES.md", package_files)
+            self.assertIn("licenses/Inno-Setup.txt", package_files)
 
             portable = output / f"{APP_DISPLAY_NAME}.zip"
             with zipfile.ZipFile(portable) as portable_zip:
@@ -164,6 +167,8 @@ class ReleaseDeliveryTests(unittest.TestCase):
             self.assertIn(f"{version_root}/DeltaStatsApp.exe", portable_files)
             self.assertIn(f"{version_root}/_internal/runtime.bin", portable_files)
             self.assertNotIn("app/DeltaStatsApp.exe", portable_files)
+            self.assertIn("LICENSE", portable_files)
+            self.assertIn("THIRD_PARTY_NOTICES.md", portable_files)
 
     def test_builder_preserves_ordered_alternate_update_bases(self):
         with patch.dict(

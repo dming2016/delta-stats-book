@@ -68,6 +68,7 @@ AppDir ZIP 使用稳定 `.part` 文件和 4 MiB 顺序 Range。连续 12 秒无�
 ## 已知限制
 
 - 启动器自身替换通过异步命令重试完成。App 激活成功后 pending 已删除；如果启动器替换最终失败，目前只有日志，没有持久 repair marker。
+- 初始公开源码将启动器替换助手改为隐藏 PowerShell 进程，路径以 Unicode 环境变量传入并使用 LiteralPath，修复英文 Windows 上 ANSI 批处理无法表达中文目录的问题；只有当前安装 `.updates` 中的候选可以进入该助手。此源码修复没有回写已发布的历史 1.9.0 二进制。
 - 同版本且 App 布局正常时，更新检查不会重新比较或修复根启动器。只有下一次 App 版本更新时才会因哈希不匹配再次尝试。
 - `1.8.3` 起至当前版本的 launcher protocol 都是 `2`，旧启动器仍能启动新版 App；但在协议升级前必须解决上面的持久修复问题。
 - 外层启动器仍是 PyInstaller onefile，冷启动可能受解包和 Defender 扫描影响。消除这类波动需要 native 或 onedir 启动器，不是页面加载优化能够解决的。

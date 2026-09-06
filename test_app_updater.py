@@ -693,7 +693,7 @@ class AppUpdaterTests(unittest.TestCase):
                 (root / pending["launcher_stage"]).read_bytes(),
                 launcher,
             )
-            self.assertEqual(status["apply_launcher"], str(root / pending["launcher_stage"]))
+            self.assertEqual(Path(status["apply_launcher"]).resolve(), (root / pending["launcher_stage"]).resolve())
             self.assertIn(manifest["launcher_file"], "\n".join(opener.requests))
 
     def test_missing_root_launcher_is_staged_even_when_environment_claims_current_protocol(self):
