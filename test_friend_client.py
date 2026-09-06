@@ -476,7 +476,7 @@ class FriendClientTests(unittest.TestCase):
 
     def test_desktop_shell_uses_one_integrated_titlebar(self) -> None:
         html = (Path(__file__).parent / "web" / "index.html").read_text(encoding="utf-8")
-        source = (Path(__file__).parent / "web" / "assets" / "theme-1.9.1.css").read_text(
+        source = (Path(__file__).parent / "web" / "assets" / "theme-1.9.2.css").read_text(
             encoding="utf-8"
         )
         topbar_markup = html.split('<header class="topbar"', 1)[1].split("</header>", 1)[0]
@@ -494,7 +494,7 @@ class FriendClientTests(unittest.TestCase):
         self.assertIn("font-size: 14px", source)
 
     def test_narrow_browser_topbar_can_expand_to_two_rows(self) -> None:
-        source = (Path(__file__).parent / "web" / "assets" / "theme-1.9.1.css").read_text(
+        source = (Path(__file__).parent / "web" / "assets" / "theme-1.9.2.css").read_text(
             encoding="utf-8"
         )
         mobile = source.split("@media (max-width: 720px)", 1)[1]
@@ -548,7 +548,7 @@ class FriendClientTests(unittest.TestCase):
         self.assertIn("const data = await response.json()", html)
         self.assertIn("本地战绩服务连接中断，请稍后重试", html)
 
-    def test_startup_sync_recovers_only_the_expired_active_account_once(self) -> None:
+    def test_startup_sync_recovers_the_active_account_through_miniapp_once(self) -> None:
         html = (Path(__file__).parent / "web" / "index.html").read_text(
             encoding="utf-8"
         )
@@ -575,13 +575,12 @@ class FriendClientTests(unittest.TestCase):
         self.assertIn("desktopWindowInitialized", scheduler_source)
         self.assertIn("account.id !== accountId", startup_source)
         self.assertIn("account.auth_state === 'expired'", startup_source)
-        self.assertIn("await syncData({manual: false})", startup_source)
-        self.assertIn("result?.authInvalid", startup_source)
+        self.assertIn("await syncData({manual: false, startup: true})", startup_source)
         self.assertIn("await recoverStartupAuth(accountId)", startup_source)
         self.assertIn("if (state.startupRecoveryAttempted", recovery_source)
-        self.assertIn("candidateId: accountId", recovery_source)
+        self.assertIn("await recoverSyncAuth(accountId,", recovery_source)
         self.assertIn("state.activeAccountId !== accountId", recovery_source)
-        self.assertIn("showStartupRecoveryDialog", recovery_source)
+        self.assertNotIn("await connectAuth(", recovery_source)
         self.assertIn("candidate_id: candidateId", connect_source)
         self.assertIn("isTransientAuthReadFailure", connect_source)
         self.assertIn("requestAnimationFrame", initializer)
@@ -610,7 +609,7 @@ class FriendClientTests(unittest.TestCase):
 
     def test_firebreak_single_match_detail_omits_redundant_kd_column(self) -> None:
         html = (Path(__file__).parent / "web" / "index.html").read_text(encoding="utf-8")
-        theme = (Path(__file__).parent / "web" / "assets" / "theme-1.9.1.css").read_text(
+        theme = (Path(__file__).parent / "web" / "assets" / "theme-1.9.2.css").read_text(
             encoding="utf-8"
         )
         detail_source = html.split("function firebreakMatchHtml", 1)[1].split(
@@ -747,7 +746,7 @@ class FriendClientTests(unittest.TestCase):
 
     def test_session_picker_rows_stay_compact_and_scroll_inside_the_popover(self) -> None:
         html = (Path(__file__).parent / "web" / "index.html").read_text(encoding="utf-8")
-        theme = (Path(__file__).parent / "web" / "assets" / "theme-1.9.1.css").read_text(
+        theme = (Path(__file__).parent / "web" / "assets" / "theme-1.9.2.css").read_text(
             encoding="utf-8"
         )
         options_css = html.split(".session-options {", 1)[1].split("}", 1)[0]
@@ -891,13 +890,13 @@ class FriendClientTests(unittest.TestCase):
         self.assertIn("recovery: true", attempt_source)
         self.assertIn("knownRevision,", attempt_source)
         self.assertIn("singleAttempt: true", attempt_source)
-        self.assertIn("syncData({manual: true})", attempt_source)
+        self.assertIn("syncData({manual: true, autoRecover: false})", attempt_source)
         self.assertNotIn("connectAuth()", attempt_source)
         self.assertIn("readAuthCandidates", discovery_source)
         self.assertIn("candidateId,", discovery_source)
         self.assertIn("allowCandidateSwitch: true", discovery_source)
         self.assertIn("singleAttempt: true", discovery_source)
-        self.assertIn("syncData({manual: true})", discovery_source)
+        self.assertIn("syncData({manual: true, autoRecover: false})", discovery_source)
         self.assertIn("attemptAuthDiscovery", open_source)
         self.assertLess(
             open_source.index("appUrl('api/wechat/open')"),

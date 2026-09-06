@@ -5,7 +5,7 @@ const path = require('node:path');
 const assert = require('node:assert/strict');
 
 const root = path.resolve(__dirname, '..');
-const output = path.join(root, 'artifacts', 'ui-redesign');
+const output = path.resolve(process.env.UI_REPORT_DIR || path.join(root, 'artifacts', 'ui-redesign'));
 fs.mkdirSync(output, {recursive: true});
 const base = process.env.UI_PREVIEW_URL || 'http://127.0.0.1:4178';
 const shotsOnly = process.argv.includes('--workspace-only');
