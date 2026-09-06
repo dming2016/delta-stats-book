@@ -94,14 +94,15 @@ class LauncherTests(unittest.TestCase):
             current.write_bytes(b"old-launcher")
             staged.write_bytes(b"new-launcher")
             process = schedule_launcher_replacement(staged, current)
-            deadline = time.monotonic() + 5
-            while time.monotonic() < deadline:
-                if current.read_bytes() == b"new-launcher" and not staged.exists():
-                    break
-                time.sleep(0.05)
+            try:
+                # Cold PowerShell startup on hosted Windows can exceed five seconds.
+                self.assertEqual(process.wait(timeout=30), 0)
+            finally:
+                if process.poll() is None:
+                    process.kill()
+                    process.wait(timeout=10)
             self.assertEqual(current.read_bytes(), b"new-launcher")
             self.assertFalse(staged.exists())
-            process.wait(timeout=5)
 
     @patch("launcher.subprocess.Popen")
     def test_replacement_script_uses_ascii_and_unicode_environment(self, popen) -> None:
