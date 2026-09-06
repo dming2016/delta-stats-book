@@ -1,0 +1,38 @@
+name: 问题反馈
+description: 报告可以复现的功能或界面问题
+title: "[Bug] "
+body:
+  - type: markdown
+    attributes:
+      value: "请勿上传凭证、OpenID、Cookie、HAR、保险箱或原始缓存。安全漏洞请私下报告。"
+  - type: input
+    id: version
+    attributes:
+      label: 程序版本与运行方式
+      placeholder: "例如 1.9.0 / 安装版、便携版或源码"
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Windows 与微信版本
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 如何复现
+      description: 描述操作步骤、预期结果和实际结果，不提供真实登录信息。
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: 脱敏后的错误或演示截图
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: 隐私确认
+      options:
+        - label: 我确认没有包含凭证、账号标识或他人的个人信息。
+          required: true

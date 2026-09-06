@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="三角洲战绩本，Windows 本地战绩工具。查看烽火净收益、固定队友共同局表现与每次开黑时段，独立复盘全面战场。">
+  <meta name="theme-color" content="#121415">
+  <title>三角洲战绩本 · Windows 战绩复盘工具</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32-v2.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16-v2.png">
+  <link rel="apple-touch-icon" href="assets/app-icon-v2.png">
+  <link rel="stylesheet" href="assets/download-page-v4.css">
+  <link rel="preload" as="image" href="assets/workspace-hero-1.9.0.png">
+  <script defer src="assets/lucide-0.468.0.min.js"></script>
+  <script defer src="assets/download-1.9.0.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到主要内容</a>
+  <header class="site-header">
+    <div class="site-width header-inner">
+      <a class="site-brand" href="./" aria-label="三角洲战绩本首页"><img src="assets/app-icon-v2.png" width="30" height="30" alt=""><span>三角洲战绩本</span></a>
+      <nav id="siteNav" aria-label="主导航"><a href="#review">战绩复盘</a><a href="#start">开始使用</a><a href="#faq">常见问题</a></nav>
+      <a class="header-download" href="#download"><i data-lucide="download" aria-hidden="true"></i><span>获取 Windows 版</span></a>
+      <button class="site-menu-button" id="siteMenuButton" aria-label="展开导航" aria-controls="siteNav" aria-expanded="false"><i data-lucide="menu" aria-hidden="true"></i></button>
+    </div>
+  </header>
+  <main id="main">
+    <section class="site-hero" aria-labelledby="page-title">
+      <div class="hero-copy site-width">
+        <div class="hero-eyebrow"><span class="live-dot"></span>WINDOWS 本地战绩工具<span class="version-label" data-version>版本加载中</span></div>
+        <h1 id="page-title">三角洲战绩本<span class="title-period">.</span></h1>
+        <p class="hero-lead">每次出击，都有一本明白账。</p>
+        <p class="hero-description">赚亏看得清，队友有得比。<br class="mobile-break">把每一晚的战绩，留在自己的电脑里。</p>
+        <div class="hero-actions">
+          <a class="button primary" data-installer-download href="downloads/DeltaStatsAssistant-Setup.exe"><i data-lucide="download" aria-hidden="true"></i>下载 Windows 版<i data-lucide="arrow-up-right" aria-hidden="true"></i></a>
+          <a class="text-link" href="#review">看看战绩本<i data-lucide="arrow-down" aria-hidden="true"></i></a>
+        </div>
+        <p class="hero-requirements">Windows 10 / 11 <span>·</span> 微信区 / QQ 区 <span>·</span> 非官方个人工具</p>
+      </div>
+      <div class="hero-product" role="img" aria-label="新版三角洲战绩本程序实景：左侧玩法导航、收益汇总与逐局战绩。画面为演示数据。"></div>
+      <span class="hero-image-label">程序实景 / 演示数据</span>
+    </section>
+    <div class="trust-band"><div class="site-width trust-grid">
+      <span><i data-lucide="hard-drive" aria-hidden="true"></i>战绩本地保存</span><span><i data-lucide="contact-round" aria-hidden="true"></i>多账号独立缓存</span>
+      <span><i data-lucide="shield-check" aria-hidden="true"></i>默认同步不上传</span><span><i data-lucide="refresh-cw" aria-hidden="true"></i>支持应用内更新</span>
+    </div></div>
+    <section class="review-section site-width" id="review" aria-labelledby="review-title">
+      <div class="section-heading"><div><p class="eyebrow">01 / 复盘你的每次出击</p><h2 id="review-title">战绩不止是记录。</h2></div><p class="heading-aside">从一晚的总收益，<br>看到每一局的来龙去脉。</p></div>
+      <div class="preview-tabs" role="tablist" aria-label="程序画面">
+        <button id="tab-overview" role="tab" data-preview="overview" aria-controls="panel-overview" aria-selected="true"><span class="tab-number">01</span><i data-lucide="chart-no-axes-combined" aria-hidden="true"></i>个人收益</button>
+        <button id="tab-friends" role="tab" data-preview="friends" aria-controls="panel-friends" aria-selected="false" tabindex="-1"><span class="tab-number">02</span><i data-lucide="users-round" aria-hidden="true"></i>固定队友</button>
+        <button id="tab-sessions" role="tab" data-preview="sessions" aria-controls="panel-sessions" aria-selected="false" tabindex="-1"><span class="tab-number">03</span><i data-lucide="clock-3" aria-hidden="true"></i>开黑时段</button>
+      </div>
+      <div class="preview-panel" id="panel-overview" role="tabpanel" aria-labelledby="tab-overview" tabindex="0">
+        <div class="preview-caption"><h3>带出多少，和净赚多少，分开算。</h3><p>净收益、带出价值、KD 与撤离表现，一眼看清。再按地图和难度，找到值得复盘的那一局。</p></div>
+        <img class="product-screenshot" src="assets/workspace-overview-1.9.0.png" width="1500" height="940" alt="个人战绩页实景，展示收益汇总、地图筛选和逐局战绩，数据为虚构演示" loading="lazy">
+      </div>
+      <div class="preview-panel" id="panel-friends" role="tabpanel" aria-labelledby="tab-friends" tabindex="0" hidden>
+        <div class="preview-caption"><h3>一起打的局，放在一起比。</h3><p>固定常玩的朋友，对照共同局里的带出、KD、击杀和撤离表现。好友入场成本不可获取，不计算好友净收益。</p></div>
+        <img class="product-screenshot" src="assets/workspace-friends-1.9.0.png" width="1500" height="940" alt="固定队友筛选与共同局数据比较实景，数据为虚构演示" loading="lazy">
+      </div>
+      <div class="preview-panel" id="panel-sessions" role="tabpanel" aria-labelledby="tab-sessions" tabindex="0" hidden>
+        <div class="preview-caption"><h3>凌晨一场，晚上一场，各有各的账。</h3><p>自动识别连续开黑时段。只看其中一段，或多选几段合并复盘，不让同一天的赚亏相互掩盖。</p></div>
+        <img class="product-screenshot" src="assets/workspace-sessions-1.9.0.png" width="1500" height="940" alt="游戏时段浮层实景，显示局数、净收益和时段多选，数据为虚构演示" loading="lazy">
+      </div>
+      <p class="image-note"><i data-lucide="scan-eye" aria-hidden="true"></i>以上为实际程序页面，使用虚构演示数据，不包含用户信息。</p>
+      <dl class="detail-band"><div><dt>逐局详情</dt><dd>时间、结果、带出、净收益、击杀、死亡、AI 击杀与同队成员。</dd></div><div><dt>全面战场，独立复盘</dt><dd>胜负、得分、KD / KDA、救援与段位趋势，不与烽火收益混算。</dd></div></dl>
+    </section>
+    <section class="start-section" id="start" aria-labelledby="start-title"><div class="site-width">
+      <div class="section-heading"><div><p class="eyebrow">02 / 开始使用</p><h2 id="start-title">下一次开黑前，准备好。</h2></div><span class="section-symbol"><i data-lucide="arrow-down-right" aria-hidden="true"></i></span></div>
+      <ol class="start-steps">
+        <li><span class="step-index">01</span><i data-lucide="monitor-down" aria-hidden="true"></i><h3>安装战绩本</h3><p>下载 Windows 安装版并打开。也可选择完整解压便携 ZIP。</p></li>
+        <li><span class="step-index">02</span><i data-lucide="message-circle" aria-hidden="true"></i><h3>打开官方小程序</h3><p>在电脑版微信打开《三角洲行动》官方小程序，切到需要读取的微信区或 QQ 区账号。</p></li>
+        <li><span class="step-index">03</span><i data-lucide="contact-round" aria-hidden="true"></i><h3>读取当前账号</h3><p>在程序中读取小程序账号后同步战绩。已有账号可直接切换，登录过期时重新读取。</p></li>
+      </ol>
+    </div></section>
+    <section class="download-section site-width" id="download" aria-labelledby="download-title">
+      <div class="section-heading"><div><p class="eyebrow">03 / 获取战绩本</p><h2 id="download-title">三角洲战绩本，Windows 版。</h2></div><span class="release-badge" data-version>版本加载中</span></div>
+      <article class="download-row">
+        <div class="download-format"><i data-lucide="monitor-down" aria-hidden="true"></i></div>
+        <div class="download-copy"><h3>安装版 <span class="recommended">推荐</span></h3><p>自己的电脑，日常使用。包含开始菜单入口，支持应用内更新。</p><span class="file-meta" data-installer-meta>EXE 安装程序 · Windows 10 / 11</span></div>
+        <a class="button primary" data-installer-download href="downloads/DeltaStatsAssistant-Setup.exe"><i data-lucide="download" aria-hidden="true"></i>下载安装版</a>
+      </article>
+      <article class="download-row">
+        <div class="download-format portable"><i data-lucide="archive" aria-hidden="true"></i></div>
+        <div class="download-copy"><h3>便携版</h3><p>无需安装，完整解压即可运行。请将启动器与 app 文件夹一起保留。</p><span class="file-meta" data-portable-meta>ZIP 压缩包 · 核心功能一致</span></div>
+        <a class="button secondary" data-portable-download href="downloads/DeltaStatsAssistant.zip"><i data-lucide="download" aria-hidden="true"></i>下载便携 ZIP</a>
+      </article>
+      <p class="download-footnote"><i data-lucide="info" aria-hidden="true"></i>需要电脑版微信承载官方小程序。QQ 区同样通过此入口读取，不需要电脑版 QQ。</p>
+    </section>
+    <section class="faq-section site-width" id="faq" aria-labelledby="faq-title">
+      <div class="section-heading"><div><p class="eyebrow">下载之前</p><h2 id="faq-title">你可能还想知道。</h2></div></div>
+      <div class="faq-list">
+        <details><summary>这是官方软件吗？<i data-lucide="plus" aria-hidden="true"></i></summary><p>不是。三角洲战绩本是非官方个人工具，主要用于本地战绩复盘，与《三角洲行动》官方无隶属关系。</p></details>
+        <details><summary>账号和战绩会上传吗？<i data-lucide="plus" aria-hidden="true"></i></summary><p>默认不会。同步、筛选与缓存都在本机完成，账号凭据使用 Windows 当前用户加密。项目服务器提供下载与版本检查。可选共享页是独立能力，只有显式配置并运行上传工具才会上传整理后的当前账号战绩。</p></details>
+        <details><summary>手机能用吗？<i data-lucide="plus" aria-hidden="true"></i></summary><p>目前提供 Windows 桌面程序，没有独立的 Android 或 iPhone 版本。手机可以查看此下载官网，但不能在手机上运行 Windows 程序。</p></details>
+        <details><summary>换账号、更新程序，会丢掉历史战绩吗？<i data-lucide="plus" aria-hidden="true"></i></summary><p>账号缓存分别保存。切换小程序账号不会主动删除已保存的账号，更新和卸载也不会主动清除本机战绩。登录态过期只影响继续同步，已有缓存仍然可看。</p></details>
+        <details><summary>为什么有些数据暂时看不到？<i data-lucide="plus" aria-hidden="true"></i></summary><p>战绩来自官方小程序接口。接口繁忙、字段缺失或数据尚未返回时，部分详情会暂不可用；未知数据不会伪装成零值，也不会用队友带出价值冒充队友净收益。</p></details>
+      </div>
+    </section>
+  </main>
+  <footer class="site-footer"><div class="site-width footer-inner"><a class="site-brand" href="./"><img src="assets/app-icon-v2.png" width="24" height="24" alt=""><span>三角洲战绩本</span></a><span>每次出击，都值得复盘。</span><small><span id="copyright"></span> · 非官方个人工具</small></div></footer>
+</body>
+</html>

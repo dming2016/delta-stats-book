@@ -1,0 +1,78 @@
+# 开发与构建
+
+## 环境
+
+使用 Windows x64、Python 3.12、Node.js 22 LTS。推荐独立虚拟环境：
+
+```powershell
+py -3.12 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+.\.venv\Scripts\python.exe friend_client.py
+```
+
+源码模式创建回环 HTTP 服务并用 pywebview 打开窗口；不包含正式构建时的更新 bootstrap。
+
+## 测试与预览
+
+```powershell
+.\.venv\Scripts\python.exe -m unittest -v
+.\.venv\Scripts\python.exe tools/preview_ui.py --port 4178
+```
+
+预览根路径为下载官网，`/delta-stats-page.html` 为虚构战绩。它不会读取真实保险箱或调用腾讯接口。不要把预览服务绑定外网。
+
+Windows 测试会跳过两项依赖 POSIX signal/flock 的发布事务测试；GitHub Actions 的独立 Ubuntu job 运行完整 `test_release_delivery`，覆盖这两项，不要求 Windows 开发者另外安装 WSL。
+
+在另一个终端运行浏览器检查：
+
+```powershell
+npm ci
+node tools/verify_ui.cjs --no-assets
+```
+
+脚本使用 Playwright、Sharp 和已安装的 Microsoft Edge。`UI_PREVIEW_URL` 可指定隔离服务地址；脚本会先核对虚构数据标识。截图、控制台检查和多宽度结果保存在 `artifacts/ui-redesign/`。
+
+去掉 `--no-assets` 会更新官网演示截图，必须在构建前完成，不能在发布过程中修改同名素材。生成原创地图占位图：
+
+```powershell
+.\.venv\Scripts\python.exe tools/generate_map_placeholders.py
+```
+
+## 构建
+
+需要 PyInstaller 和 Inno Setup 6.5 或更新版本。Inno 编译器不在默认位置时设置 `INNO_SETUP_COMPILER`。
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements-build.txt
+.\.venv\Scripts\python.exe build_friend_package.py
+```
+
+构建会重建整个 `artifacts/local-package/`。不要在此目录保存手工文件。五件套的名称、大小、SHA-256 以构建生成的 `release/version.json` 为准。
+
+生产二进制与源码包是不同分发物。初始开源标签保留 1.9.0 的运行代码，使用原创地图占位图，不宣称能逐字节重现历史官网下载的 PE 文件。
+
+## 修改版分发
+
+分发 Fork 前，至少设置独立更新服务：
+
+```powershell
+$env:DELTA_UPDATE_BASE_URL = 'https://updates.example.com'
+$env:DELTA_UPDATE_ALTERNATE_BASE_URLS = ''
+.\.venv\Scripts\python.exe build_friend_package.py
+```
+
+还应审查安装 AppId、Mutex、安装目录、数据目录、注册表键和产品名称，避免与上游冲突。不要单独改一个 AppId 就认为已隔离；相关文件见 [更新协议](update-protocol.md)。
+
+## 服务端参考
+
+`deploy/` 是上游 Nginx/systemd 和发布事务实现的参考，含固定域名、Linux 路径及服务名称，不是通用一键部署器。不要在不理解影响范围时以 root 执行。部署自己的实例需要先适配目录、域名、证书和服务账号，不使用上游生产服务器。
+
+可选共享服务必须单独配置认证和反向代理，只在回环地址监听。其配置不在公开仓库。接口和安全边界见 [集成指南](integration-guide.md) 与 [SECURITY.md](../SECURITY.md)。
+
+## 常见问题
+
+- 繁忙或网络错误不代表登录过期；已有历史缓存仍应可看。
+- QQ 区也从电脑版微信中的官方小程序读取，不需要电脑版 QQ。
+- “打开微信成功”只表示 Windows 接收了协议请求，不证明已经打开指定页面。
+- 源码 Windows GUI 测试不应覆盖现有正式安装。安装器即使使用不同 `/DIR`，仍可能共用注册表和开始菜单项。
+- 提交日志前脱敏，不公开账号保险箱、原始战绩或 HAR。

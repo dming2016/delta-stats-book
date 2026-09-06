@@ -1,0 +1,13 @@
+{
+  "name": "delta-stats-book-ui-tests",
+  "version": "1.9.0",
+  "private": true,
+  "description": "Synthetic UI verification for Delta Stats Book",
+  "scripts": {
+    "test:ui": "node tools/verify_ui.cjs --no-assets"
+  },
+  "devDependencies": {
+    "playwright": "1.63.0",
+    "sharp": "0.35.4"
+  }
+}

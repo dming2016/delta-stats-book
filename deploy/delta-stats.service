@@ -1,0 +1,16 @@
+[Unit]
+Description=Delta Force shared stats
+After=network.target
+
+[Service]
+Type=simple
+User=delta-stats
+Group=delta-stats
+WorkingDirectory=/opt/delta-stats
+EnvironmentFile=/etc/delta-stats.env
+ExecStart=/usr/bin/python3 /opt/delta-stats/shared_server.py --host 127.0.0.1 --port 3012
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
