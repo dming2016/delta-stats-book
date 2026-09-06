@@ -9,6 +9,7 @@ This repository is the public source distribution of 三角洲战绩本, a Windo
 - Preserve the physical launcher name, installer AppId, registry keys, Mutex and user-data directories when contributing upstream.
 - Keep Firebreak and Warfare models separate.
 - Only an explicit upstream authentication rejection may persist expired credentials. Network failures and busy responses must not invalidate an account.
+- Keep the desktop UI light. On startup or manual sync, upstream busy responses (including stale miniapp credentials returning -108) must trigger one bounded same-account miniapp recovery and sync retry, not merely ask the user to wait. Do not auto-launch for network errors or local operation locks.
 - Keep accounts, preferences and caches isolated; remote upload is always opt-in.
 - Protocol changes require coordinated tests for the builder, launcher, updater and deployment scripts.
 

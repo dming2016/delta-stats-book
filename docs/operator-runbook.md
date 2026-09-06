@@ -34,7 +34,7 @@ node tools/verify_ui.cjs --no-assets
 
 去掉 `--no-assets` 会更新官网演示截图，必须在构建前完成，不能在发布过程中修改同名素材。生成原创地图占位图：
 
-`node tools/verify_startup.cjs` 使用同一隔离服务（默认 4180，可用 `UI_PREVIEW_URL` 指定），模拟真实桌面桥接、90 天前缓存及腾讯繁忙，验证旧缓存可见、恢复入口、同账号与关闭取消。不要只用近期演示数据验收启动后的空列表。
+`node tools/verify_startup.cjs` 使用同一隔离服务（默认 4180，可用 `UI_PREVIEW_URL` 指定），模拟桌面桥接、90 天前缓存及腾讯繁忙，验证浅色、旧缓存可见、启动/手动自动拉起、成功重试、失败不循环、同账号与关闭取消。报告默认写入 `artifacts/light-recovery/`，可用 `UI_REPORT_DIR` 隔离批次。不要只用近期演示数据验收启动后的空列表。
 
 ```powershell
 .\.venv\Scripts\python.exe tools/generate_map_placeholders.py
@@ -73,7 +73,7 @@ $env:DELTA_UPDATE_ALTERNATE_BASE_URLS = ''
 
 ## 常见问题
 
-- 繁忙或网络错误不代表登录过期；已有历史缓存仍应可看。
+- 用户反馈旧小程序登录态可能返回 `-108 / 腾讯繁忙`，启动/手动刷新应自动拉起小程序、定向恢复同账号并重试一次。不要只让用户等待；但不能因此把所有繁忙或网络错误持久化为登录过期，历史缓存仍应可看。
 - QQ 区也从电脑版微信中的官方小程序读取，不需要电脑版 QQ。
 - “打开微信成功”只表示 Windows 接收了协议请求，不证明已经打开指定页面。
 - 源码 Windows GUI 测试不应覆盖现有正式安装。安装器即使使用不同 `/DIR`，仍可能共用注册表和开始菜单项。

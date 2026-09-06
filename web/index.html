@@ -649,7 +649,7 @@
       .update-release-notes { max-height: 142px; }
     }
   </style>
-  <link rel="stylesheet" href="assets/theme-1.9.1.css">
+  <link rel="stylesheet" href="assets/theme-1.9.2.css">
   <script defer src="assets/lucide-0.468.0.min.js"></script>
   <script defer src="assets/workspace-1.9.0.js"></script>
 </head>
@@ -2279,8 +2279,8 @@
       }
       if (/busy|rate/.test(info.errorKind)) {
         return {
-          title: '腾讯接口暂时繁忙',
-          hint: '这次失败不会被判定为登录失效。本地缓存仍可查看；可以再次刷新，或主动刷新登录态后重试。',
+          title: '需要刷新小程序登录态',
+          hint: '小程序登录态陈旧时也可能返回这个提示。刷新登录态会打开小程序，读取同一账号的新登录态后重试；本地缓存仍可查看。',
         };
       }
       if (/network|timeout/.test(info.errorKind)) {
@@ -2437,7 +2437,7 @@
           $('recoveryMessage').textContent = '已读取到当前账号的新登录态';
           $('recoveryHint').textContent = '正在自动刷新最新战绩，请稍候。';
           $('openWechatButton').textContent = '正在刷新战绩...';
-          const synced = await syncData({manual: true});
+          const synced = await syncData({manual: true, autoRecover: false});
           if (!recoveryRunIsActive(runId, accountId)) return {ok: false, cancelled: true};
           if (synced?.ok) {
             closeRecoveryDialog();
@@ -2578,7 +2578,7 @@
           $('recoveryMessage').textContent = `已读取 ${accountName(activeAccount())}`;
           $('recoveryHint').textContent = '正在自动刷新最新战绩，请稍候。';
           $('openWechatButton').textContent = '正在刷新战绩...';
-          const synced = await syncData({manual: true});
+          const synced = await syncData({manual: true, autoRecover: false});
           if (!recoveryRunIsActive(runId, accountId)) return {ok: false, cancelled: true};
           if (synced?.ok) {
             closeRecoveryDialog();
@@ -2956,6 +2956,8 @@
     }
     async function syncData(options = {}) {
       const manual = Boolean(options?.manual);
+      const autoRecover = (manual || Boolean(options?.startup)) && options?.autoRecover !== false;
+      let recoveryFailure = null;
       const button = $('refreshButton');
       if (state.syncRunning) return {ok: false, skipped: true};
       const account = activeAccount();
@@ -2975,7 +2977,9 @@
           retryable: pending,
         };
         $('syncState').textContent = failure.message;
-        if (manual) showRecoveryDialog(failure, {source: 'sync'});
+        if (autoRecover && shouldRecoverSyncAuth(normalizeFailure(failure))) {
+          await recoverSyncAuth(account.id, failure);
+        } else if (manual) showRecoveryDialog(failure, {source: 'sync'});
         return {ok: false, skipped: true, authInvalid: failure.auth_invalid, authPending: pending};
       }
       const accountId = account.id;
@@ -3012,7 +3016,9 @@
           : isExpiredAuthFailure(failure)
             ? `当前账号登录已过期：${failure.message}`
             : failure.message;
-        if (manual) showRecoveryDialog(failure, {source: 'sync'});
+        if (autoRecover && shouldRecoverSyncAuth(failure) && !state.authRecoveryController) {
+          recoveryFailure = failure;
+        } else if (manual) showRecoveryDialog(failure, {source: 'sync'});
         return {ok: false, authInvalid: isExpiredAuthFailure(failure), authPending: pending, failure, error};
       } finally {
         state.syncRunning = false;
@@ -3020,7 +3026,19 @@
         renderAccountTrigger();
         renderAccountDialog();
         button.classList.remove('syncing');
+        if (recoveryFailure) await recoverSyncAuth(accountId, recoveryFailure);
       }
+    }
+    function shouldRecoverSyncAuth(failure) {
+      return isExpiredAuthFailure(failure)
+        || isPendingAuthState(failure.authState)
+        || ['busy', 'rate', 'rate_limit', 'rate_limited'].includes(failure.errorKind);
+    }
+    async function recoverSyncAuth(accountId, failure) {
+      if (!accountId || state.activeAccountId !== accountId
+          || state.accountBusy || state.syncRunning || state.authRecoveryController) return;
+      showRecoveryDialog(failure, {source: 'sync', accountId});
+      await openWechatRecovery();
     }
     function scheduleStartupSync() {
       if (
@@ -3039,10 +3057,7 @@
         if (account.auth_state === 'expired' || isPendingAuthState(account.auth_state)) await recoverStartupAuth(accountId);
         return;
       }
-      const result = await syncData({manual: false});
-      if ((result?.authInvalid || result?.authPending) && state.activeAccountId === accountId) {
-        await recoverStartupAuth(accountId);
-      }
+      await syncData({manual: false, startup: true});
     }
     async function connectAuth(options = {}) {
       const candidateId = typeof options?.candidateId === 'string' ? options.candidateId.trim() : '';
@@ -3169,31 +3184,16 @@
     function isTransientAuthReadFailure(failure) {
       return isTransientFailure(normalizeFailure(failure, '读取登录态失败'));
     }
-    function showStartupRecoveryDialog(message, authState = activeAccount()?.auth_state || 'expired') {
-      const pending = isPendingAuthState(authState);
-      setAccountMessage(`当前账号${pending ? '登录态等待验证' : '登录态已过期'}，自动更新失败：${message}`, true);
-      showRecoveryDialog({
-        message,
-        error_kind: pending ? 'auth_pending' : 'auth_expired',
-        auth_state: authState,
-        auth_invalid: authState === 'expired',
-        retryable: pending,
-      }, {source: 'auth', accountId: activeAccount()?.id || ''});
-    }
     async function recoverStartupAuth(accountId) {
       if (state.startupRecoveryAttempted || !accountId || state.activeAccountId !== accountId) return;
       state.startupRecoveryAttempted = true;
-      const recovered = await connectAuth({candidateId: accountId, automatic: true});
-      if (!recovered?.ok || state.activeAccountId !== accountId) return;
       const account = activeAccount();
-      if (!accountCanSync(account)) {
-        showStartupRecoveryDialog('当前账号登录态仍不可用，请在电脑版微信小程序中重新登录后再试', account?.auth_state);
-        return;
-      }
-      const retry = await syncData({manual: false});
-      if ((retry?.authInvalid || retry?.authPending) && state.activeAccountId === accountId) {
-        showStartupRecoveryDialog('读取到的登录态仍无法用于刷新，请在电脑版微信小程序中确认账号后再试', retry.authPending ? 'pending_verification' : 'expired');
-      }
+      await recoverSyncAuth(accountId, {
+        message: '正在打开小程序，更新当前账号登录态',
+        error_kind: isPendingAuthState(account?.auth_state) ? 'auth_pending' : 'auth_expired',
+        auth_state: account?.auth_state,
+        auth_invalid: account?.auth_state === 'expired',
+      });
     }
     async function openAccountDialog() {
       setAccountMessage();
