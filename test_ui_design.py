@@ -67,7 +67,7 @@ class UiDesignTests(unittest.TestCase):
         self.assertNotIn("button.textContent = '↻'", page)
 
     def test_styles_have_one_dark_theme_and_reduced_motion(self):
-        css = (WEB / "assets/theme-1.9.0.css").read_text(encoding="utf-8")
+        css = (WEB / "assets/theme-1.9.1.css").read_text(encoding="utf-8")
         self.assertEqual(css.count(":root"), 1)
         self.assertIn("color-scheme: dark", css)
         self.assertNotIn("linear-gradient", css)

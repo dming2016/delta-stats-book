@@ -70,6 +70,9 @@ jobs:
             if (-not $ready) { throw 'Synthetic preview failed to start' }
             npm run test:ui
             if ($LASTEXITCODE -ne 0) { throw 'UI tests failed' }
+            $env:UI_PREVIEW_URL = 'http://127.0.0.1:4178'
+            node tools/verify_startup.cjs
+            if ($LASTEXITCODE -ne 0) { throw 'Desktop startup regression failed' }
           } finally {
             Stop-Process -Id $server.Id -ErrorAction SilentlyContinue
           }
