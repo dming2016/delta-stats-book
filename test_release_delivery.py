@@ -81,7 +81,9 @@ class ReleaseDeliveryTests(unittest.TestCase):
                 installer.write_bytes(b"installer")
                 return installer
 
-            with redirect_stdout(io.StringIO()), patch.dict(
+            # An English Windows pipe cannot encode the Chinese portable archive name.
+            console_output = io.TextIOWrapper(io.BytesIO(), encoding="cp1252", write_through=True)
+            with redirect_stdout(console_output), patch.dict(
                 os.environ,
                 {
                     "DELTA_UPDATE_BASE_URL": "https://zhou.opendeep.top",

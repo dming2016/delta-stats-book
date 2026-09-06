@@ -340,7 +340,7 @@ def main() -> int:
         ),
         encoding="utf-8",
     )
-    print(json.dumps({"ok": True, "version": APP_VERSION, "archive": archive, "release": str(release)}, ensure_ascii=False))
+    print(json.dumps({"ok": True, "version": APP_VERSION, "archive": archive, "release": str(release)}, ensure_ascii=True))
     return 0
 
 
