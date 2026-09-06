@@ -34,6 +34,8 @@ node tools/verify_ui.cjs --no-assets
 
 去掉 `--no-assets` 会更新官网演示截图，必须在构建前完成，不能在发布过程中修改同名素材。生成原创地图占位图：
 
+`node tools/verify_startup.cjs` 使用同一隔离服务（默认 4180，可用 `UI_PREVIEW_URL` 指定），模拟真实桌面桥接、90 天前缓存及腾讯繁忙，验证旧缓存可见、恢复入口、同账号与关闭取消。不要只用近期演示数据验收启动后的空列表。
+
 ```powershell
 .\.venv\Scripts\python.exe tools/generate_map_placeholders.py
 ```

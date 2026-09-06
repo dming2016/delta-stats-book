@@ -649,7 +649,7 @@
       .update-release-notes { max-height: 142px; }
     }
   </style>
-  <link rel="stylesheet" href="assets/theme-1.9.0.css">
+  <link rel="stylesheet" href="assets/theme-1.9.1.css">
   <script defer src="assets/lucide-0.468.0.min.js"></script>
   <script defer src="assets/workspace-1.9.0.js"></script>
 </head>
@@ -726,6 +726,14 @@
       </div>
       <button class="reset-filters" id="resetFiltersButton" title="重置当前玩法筛选"><i data-lucide="rotate-ccw" aria-hidden="true"></i><span>重置筛选</span></button>
     </header>
+    <section class="sync-notice" id="syncNotice" role="status" hidden>
+      <div><strong id="syncNoticeTitle"></strong><p id="syncNoticeMessage"></p></div>
+      <button id="syncNoticeAction" type="button">处理同步问题</button>
+    </section>
+    <section class="cache-notice" id="cacheNotice" role="status" hidden>
+      <span id="cacheNoticeMessage"></span>
+      <button id="showCachedMatchesButton" type="button">查看全部缓存</button>
+    </section>
     <section class="filter-shell" aria-label="战绩筛选">
       <div class="player-row" id="playerRow" hidden>
         <label for="playerSelect">玩家</label>
@@ -1040,8 +1048,8 @@
     <script>
     function createDefaultModeFilters() {
       return {
-        sol: {difficulty: 'all', mapName: 'all', preset: 7, from: '', to: '', friends: [], friendMode: 'any', sessions: []},
-        mp: {mapName: 'all', ruleset: 'all', result: 'all', side: 'all', operator: 'all', preset: 7, from: '', to: '', friends: [], friendMode: 'any', sessions: []},
+        sol: {difficulty: 'all', mapName: 'all', preset: 'all', from: '', to: '', friends: [], friendMode: 'any', sessions: []},
+        mp: {mapName: 'all', ruleset: 'all', result: 'all', side: 'all', operator: 'all', preset: 'all', from: '', to: '', friends: [], friendMode: 'any', sessions: []},
       };
     }
     const state = {
@@ -1057,7 +1065,8 @@
       lastWarfareMatches: [],
       modeFilters: createDefaultModeFilters(),
       player: '',
-      preset: 7,
+      preset: 'all',
+      syncFailure: null,
       activeFriends: new Set(),
       friendMode: 'any',
       favoriteFriends: [],
@@ -2783,6 +2792,8 @@
       return fetchJsonWithRetry(url, {signal}, 20000, 3);
     }
     function resetAccountScopedState() {
+      renderSyncNotice();
+      $('cacheNotice').hidden = true;
       if (state.loadController) state.loadController.abort();
       state.loadController = null;
       state.loadSerial += 1;
@@ -2820,6 +2831,37 @@
       $('syncState').textContent = state.accounts.length ? '未选择账号' : '尚未添加账号';
       $('app').classList.remove('loading');
     }
+    function renderCacheNotice(data, visibleCount) {
+      const cached = Number(data.available?.total) || 0;
+      $('cacheNotice').hidden = visibleCount > 0 || cached === 0;
+      $('cacheNoticeMessage').textContent = cached
+        ? `本机仍保留 ${number.format(cached)} 局历史战绩，当前玩法或筛选条件没有匹配。`
+        : '';
+    }
+    function renderSyncNotice(failure = null, accountId = state.activeAccountId) {
+      state.syncFailure = failure ? {failure, accountId} : null;
+      $('syncNotice').hidden = !failure;
+      if (!failure) return;
+      $('syncNoticeTitle').textContent = recoveryCopy(failure).title;
+      $('syncNoticeMessage').textContent = `${failure.message}。已保存的战绩仍可查看。`;
+      const actions = recoveryActions(failure, {
+        source: 'sync', recoveryAccountId: accountId,
+        currentAuthState: activeAccount()?.auth_state || '',
+      });
+      $('syncNoticeAction').textContent = actions.showAuthRecovery ? '刷新登录态' : '查看恢复选项';
+    }
+    $('showCachedMatchesButton').addEventListener('click', () => {
+      state.modeFilters[state.mode] = createDefaultModeFilters()[state.mode];
+      restoreModeFilters(state.mode);
+      renderModeLayout();
+      loadData();
+    });
+    $('syncNoticeAction').addEventListener('click', () => {
+      const notice = state.syncFailure;
+      if (!notice || notice.accountId !== state.activeAccountId) return;
+      showRecoveryDialog(notice.failure, {source: 'sync', accountId: notice.accountId});
+      if (!$('openWechatButton').hidden) void openWechatRecovery();
+    });
     async function loadData({extendLatestSession = false} = {}) {
       const accountId = state.activeAccountId;
       if (!accountId) {
@@ -2874,6 +2916,8 @@
           ? ` · 得分 ${warfareRendered.summary.score_matches}/${warfareRendered.summary.matches} · 记分板 ${number.format((data.warfare_summary?.coverage?.warfare_players) ?? visibleMatches.filter((match) => Array.isArray(match.warfare_players) && match.warfare_players.length).length)}/${number.format(warfareRendered.summary.matches)}`
           : (data.summary?.income_loaded === data.summary?.sol_matches ? '' : ` · 带出价值 ${data.summary?.income_loaded || 0}/${data.summary?.sol_matches || 0}`);
         const warnings = Array.isArray(data.warnings) && data.warnings.length ? ` · ${data.warnings.join('；')}` : '';
+        renderCacheNotice(data, visibleMatches.length);
+        if (state.syncFailure && state.syncFailure.accountId !== accountId) renderSyncNotice();
         $('syncState').textContent = `缓存 ${number.format(data.available?.total || 0)} 局 · 当前 ${number.format(visibleMatches.length)} 局${detailStatus} · 更新于 ${updated}${warnings}`;
         saveViewPreferences();
         return {ok: true, timeRangeChanged};
@@ -2956,9 +3000,11 @@
         if (data?.detail_failures) $('syncState').textContent += ` · ${number.format(data.detail_failures)} 项详情暂时失败，稍后同步会重试`;
         if (data?.remote?.enabled && data.remote.ok) $('syncState').textContent += ' · 已上传服务器';
         else if (data?.remote?.enabled && data.remote.ok === false) $('syncState').textContent += ` · 上传失败：${data.remote.error}`;
+        if (state.activeAccountId === accountId) renderSyncNotice();
         return {ok: true, data};
       } catch (error) {
         const failure = normalizeFailure(error, '同步服务响应超时，请稍后重试');
+        if (state.activeAccountId === accountId) renderSyncNotice(failure, accountId);
         applyFailureAuthState(failure, accountId);
         const pending = isPendingAuthState(failure.authState);
         $('syncState').textContent = pending
@@ -4242,7 +4288,7 @@
     $('windowDragRegion').querySelector('.topbar-actions').addEventListener('mousedown', (event) => event.stopPropagation());
 
     async function initialize() {
-      setPreset(7);
+      setPreset('all');
       const initialRange = {preset: state.preset, from: $('fromInput').value, to: $('toInput').value};
       state.modeFilters.sol = {...state.modeFilters.sol, ...initialRange};
       state.modeFilters.mp = {...state.modeFilters.mp, ...initialRange};

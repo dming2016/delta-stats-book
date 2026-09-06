@@ -476,7 +476,7 @@ class FriendClientTests(unittest.TestCase):
 
     def test_desktop_shell_uses_one_integrated_titlebar(self) -> None:
         html = (Path(__file__).parent / "web" / "index.html").read_text(encoding="utf-8")
-        source = (Path(__file__).parent / "web" / "assets" / "theme-1.9.0.css").read_text(
+        source = (Path(__file__).parent / "web" / "assets" / "theme-1.9.1.css").read_text(
             encoding="utf-8"
         )
         topbar_markup = html.split('<header class="topbar"', 1)[1].split("</header>", 1)[0]
@@ -494,7 +494,7 @@ class FriendClientTests(unittest.TestCase):
         self.assertIn("font-size: 14px", source)
 
     def test_narrow_browser_topbar_can_expand_to_two_rows(self) -> None:
-        source = (Path(__file__).parent / "web" / "assets" / "theme-1.9.0.css").read_text(
+        source = (Path(__file__).parent / "web" / "assets" / "theme-1.9.1.css").read_text(
             encoding="utf-8"
         )
         mobile = source.split("@media (max-width: 720px)", 1)[1]
@@ -610,7 +610,7 @@ class FriendClientTests(unittest.TestCase):
 
     def test_firebreak_single_match_detail_omits_redundant_kd_column(self) -> None:
         html = (Path(__file__).parent / "web" / "index.html").read_text(encoding="utf-8")
-        theme = (Path(__file__).parent / "web" / "assets" / "theme-1.9.0.css").read_text(
+        theme = (Path(__file__).parent / "web" / "assets" / "theme-1.9.1.css").read_text(
             encoding="utf-8"
         )
         detail_source = html.split("function firebreakMatchHtml", 1)[1].split(
@@ -747,7 +747,7 @@ class FriendClientTests(unittest.TestCase):
 
     def test_session_picker_rows_stay_compact_and_scroll_inside_the_popover(self) -> None:
         html = (Path(__file__).parent / "web" / "index.html").read_text(encoding="utf-8")
-        theme = (Path(__file__).parent / "web" / "assets" / "theme-1.9.0.css").read_text(
+        theme = (Path(__file__).parent / "web" / "assets" / "theme-1.9.1.css").read_text(
             encoding="utf-8"
         )
         options_css = html.split(".session-options {", 1)[1].split("}", 1)[0]
