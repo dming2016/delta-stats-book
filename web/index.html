@@ -649,7 +649,7 @@
       .update-release-notes { max-height: 142px; }
     }
   </style>
-  <link rel="stylesheet" href="assets/theme-1.9.3.css">
+  <link rel="stylesheet" href="assets/theme-1.9.4.css">
   <script defer src="assets/lucide-0.468.0.min.js"></script>
   <script defer src="assets/workspace-1.9.0.js"></script>
 </head>
@@ -678,6 +678,7 @@
           <span class="account-trigger-chevron" aria-hidden="true">⌄</span>
         </button>
         <button class="connect-button" id="connectButton" hidden>添加账号</button>
+        <button class="miniapp-launch" id="launchMiniappButton" type="button" title="打开三角洲行动官方小程序"><i data-lucide="external-link" aria-hidden="true"></i><span>打开小程序</span></button>
         <button class="icon-button" id="refreshButton" title="同步最新战绩" aria-label="同步最新战绩"><i data-lucide="refresh-cw" aria-hidden="true"></i></button>
         <button class="topbar-update" id="topbarUpdateButton" type="button" title="检查软件更新" aria-label="检查软件更新" hidden>
           <span class="topbar-update-icon" aria-hidden="true">↑</span>
@@ -965,10 +966,12 @@
     <div class="recovery-body">
       <p class="recovery-message" id="recoveryMessage" role="alert">暂时无法刷新战绩</p>
       <p class="recovery-hint" id="recoveryHint">本地缓存仍可继续查看。</p>
+      <p class="recovery-hint" id="miniappLaunchStatus" role="status" hidden></p>
     </div>
     <div class="dialog-foot">
       <button class="secondary" id="dismissRecoveryButton">关闭</button>
       <button class="secondary" id="retrySyncButton">再次刷新</button>
+      <button class="miniapp-launch" id="recoveryLaunchMiniappButton" type="button" title="打开三角洲行动官方小程序"><i data-lucide="external-link" aria-hidden="true"></i><span>打开小程序</span></button>
       <button class="secondary" id="rereadAuthButton" hidden>切换到检测账号</button>
       <button class="save recovery-open-wechat" id="openWechatButton" hidden>刷新登录态</button>
     </div>
@@ -2324,6 +2327,7 @@
       $('recoveryTitle').textContent = copy.title;
       $('recoveryMessage').textContent = info.message;
       $('recoveryHint').textContent = copy.hint;
+      $('miniappLaunchStatus').hidden = true;
       $('openWechatButton').hidden = !actions.showAuthRecovery;
       $('openWechatButton').textContent = '刷新登录态';
       $('rereadAuthButton').hidden = actions.accountDiscovery || source !== 'auth' || Boolean(recoveryAccountId);
@@ -2639,6 +2643,62 @@
       setRecoveryBusy(false);
       return {ok: false, timedOut: true};
     }
+    let wechatLaunchPromise = null;
+    function setMiniappLaunchBusy(busy) {
+      ['launchMiniappButton', 'recoveryLaunchMiniappButton'].forEach((id) => {
+        $(id).disabled = busy;
+        $(id).setAttribute('aria-busy', String(busy));
+      });
+    }
+    async function launchWechat() {
+      if (!wechatLaunchPromise) {
+        setMiniappLaunchBusy(true);
+        wechatLaunchPromise = Promise.resolve().then(async () => {
+          const api = desktopApi();
+          if (typeof api?.open_wechat === 'function') {
+            const data = await api.open_wechat();
+            if (data?.ok !== true) throw responseFailure(data, '无法打开三角洲行动小程序');
+            return data;
+          }
+          const {response, data} = await fetchJsonWithTimeout(appUrl('api/wechat/open'), {method: 'POST'}, 15000);
+          if (!response.ok || data?.ok !== true) throw responseFailure(data, '无法打开三角洲行动小程序');
+          return data;
+        }).finally(() => {
+          wechatLaunchPromise = null;
+          setMiniappLaunchBusy(false);
+        });
+      }
+      let timer;
+      try {
+        // Keep the dispatch lock until the native call settles, even after a UI timeout.
+        return await Promise.race([
+          wechatLaunchPromise,
+          new Promise((_, reject) => {
+            timer = window.setTimeout(() => reject(new Error('打开请求尚未返回，请检查微信；为避免重复打开，暂不重复发送。')), 15000);
+          }),
+        ]);
+      } finally {
+        window.clearTimeout(timer);
+      }
+    }
+    async function openMiniapp() {
+      if (wechatLaunchPromise) return;
+      const report = (message) => {
+        $('syncState').textContent = message;
+        $('launchMiniappButton').title = message;
+        $('miniappLaunchStatus').textContent = message;
+        $('miniappLaunchStatus').hidden = false;
+      };
+      report('正在发送小程序打开请求...');
+      try {
+        const data = await launchWechat();
+        report(data.direct
+          ? '已向微信发送小程序打开请求，请确认小程序已显示。'
+          : data.message || '已向微信发送打开请求，请手动进入三角洲行动小程序。');
+      } catch (error) {
+        report(`打开小程序失败：${error.message || error}`);
+      }
+    }
     async function openWechatRecovery() {
       const context = state.recoveryContext;
       const accountId = context?.accountId || '';
@@ -2666,11 +2726,10 @@
             : account?.credential_revision ?? null;
         }
         if (!recoveryRunIsActive(runId, accountId)) return;
-        const {response, data} = await fetchJsonWithTimeout(appUrl('api/wechat/open'), {method:'POST', signal: controller.signal}, 15000);
-        if (!response.ok || data?.ok === false) throw responseFailure(data, '无法打开三角洲行动小程序');
+        const data = await launchWechat();
         if (!recoveryRunIsActive(runId, accountId)) return;
         $('recoveryTitle').textContent = '等待小程序刷新登录态';
-        $('recoveryMessage').textContent = data?.direct ? '已打开三角洲行动小程序' : '已打开微信';
+        $('recoveryMessage').textContent = data?.direct ? '已发送小程序打开请求' : '已发送微信打开请求';
         $('recoveryHint').textContent = data?.message || '请在小程序中确认当前账号，程序会自动检测。';
         if (accountDiscovery) await attemptAuthDiscovery({runId, signal: controller.signal});
         else await attemptAuthRecovery({accountId, knownRevision, runId, signal: controller.signal});
@@ -3524,6 +3583,8 @@
     $('closeRecoveryDialog').addEventListener('click', closeRecoveryDialog);
     $('dismissRecoveryButton').addEventListener('click', closeRecoveryDialog);
     $('openWechatButton').addEventListener('click', () => void openWechatRecovery());
+    $('launchMiniappButton').addEventListener('click', () => void openMiniapp());
+    $('recoveryLaunchMiniappButton').addEventListener('click', () => void openMiniapp());
     $('rereadAuthButton').addEventListener('click', () => void useDetectedRecoveryAccount());
     $('retrySyncButton').addEventListener('click', () => void retryRecoverySync());
     $('recoveryDialog').addEventListener('cancel', (event) => {

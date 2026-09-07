@@ -16,7 +16,7 @@ fs.mkdirSync(output, {recursive: true});
   const browser = await chromium.launch({headless: true, channel: 'msedge'});
   const errors = [];
   const results = [];
-  async function scenario({kind = 'busy', restored = false, retryFails = false, expired = false, mismatch = false} = {}) {
+  async function scenario({kind = 'busy', restored = false, retryFails = false, expired = false, mismatch = false, native = true} = {}) {
     const account = {
       id: 'demo-account', account_type: 'wechat', display_name: '演示账号',
       auth_state: expired ? 'expired' : 'valid', has_credential: true, can_sync: !expired,
@@ -27,14 +27,19 @@ fs.mkdirSync(output, {recursive: true});
     const calls = {opens: 0, syncs: 0, imports: 0};
     const page = await browser.newPage({viewport: {width: 1280, height: 840}});
     page.on('pageerror', error => errors.push(error.message));
-    await page.addInitScript(() => {
+    await page.exposeFunction('nativeOpenWechat', async () => {
+      calls.opens++;
+      return {ok: true, direct: true};
+    });
+    await page.addInitScript(useNative => {
       window.pywebview = {api: {
         get_window_state: async () => ({maximized: false}),
-        get_app_info: async () => ({version: '1.9.3', release_notes: []}),
-        check_for_update: async () => ({phase: 'up_to_date', current_version: '1.9.3'}),
-        get_update_status: async () => ({phase: 'up_to_date', current_version: '1.9.3'}),
+        get_app_info: async () => ({version: '1.9.4', release_notes: []}),
+        check_for_update: async () => ({phase: 'up_to_date', current_version: '1.9.4'}),
+        get_update_status: async () => ({phase: 'up_to_date', current_version: '1.9.4'}),
       }};
-    });
+      if (useNative) window.pywebview.api.open_wechat = window.nativeOpenWechat;
+    }, native);
     await page.route('**/api/**', async route => {
       const url = new URL(route.request().url());
       let data;
@@ -54,6 +59,7 @@ fs.mkdirSync(output, {recursive: true});
           : {status: 'failed', account_id: account.id, error: kind === 'busy' ? '腾讯战绩接口暂时繁忙 -108' : kind,
             error_kind: kind, auth_invalid: false, retryable: true, auth_state: account.auth_state};
       } else if (url.pathname === '/api/wechat/open') {
+        assert.equal(native, false, 'Native recovery must not depend on loopback launch.');
         calls.opens++;
         data = {ok: true, direct: true};
       } else if (url.pathname === '/api/auth/import') {
@@ -93,7 +99,7 @@ fs.mkdirSync(output, {recursive: true});
       rail: getComputedStyle(document.querySelector('.workspace-rail')).backgroundColor,
       dialog: getComputedStyle(document.getElementById('recoveryDialog')).backgroundColor,
     }));
-    assert.deepEqual(colors, {scheme: 'light', canvas: 'rgb(244, 245, 244)', rail: 'rgb(255, 255, 255)', dialog: 'rgb(255, 255, 255)'});
+    assert.deepEqual(colors, {scheme: 'light', canvas: 'rgb(238, 241, 240)', rail: 'rgb(255, 255, 255)', dialog: 'rgb(255, 255, 255)'});
     await page.screenshot({path: path.join(output, 'light-cache-startup.png')});
     await page.locator('#presets [data-days="7"]').click();
     await page.locator('#cacheNotice').waitFor({state: 'visible'});
@@ -112,7 +118,7 @@ fs.mkdirSync(output, {recursive: true});
     results.push({case: 'startup-manual-cancel-cache-light', ...calls, colors});
     await page.close();
 
-    for (const config of [{restored: true}, {restored: true, retryFails: true}, {restored: true, expired: true}]) {
+    for (const config of [{restored: true}, {restored: true, retryFails: true}, {restored: true, expired: true}, {restored: true, native: false}]) {
       const item = await scenario(config);
       await item.page.waitForFunction(() => state.accounts[0]?.credential_revision === 'new-revision');
       await item.page.waitForFunction(() => state.startupSyncScheduled && !state.syncRunning && !state.authRecoveryController);

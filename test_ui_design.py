@@ -67,7 +67,7 @@ class UiDesignTests(unittest.TestCase):
         self.assertNotIn("button.textContent = '↻'", page)
 
     def test_styles_have_one_light_theme_and_reduced_motion(self):
-        css = (WEB / "assets/theme-1.9.3.css").read_text(encoding="utf-8")
+        css = (WEB / "assets/theme-1.9.4.css").read_text(encoding="utf-8")
         self.assertEqual(css.count(":root"), 1)
         self.assertIn("color-scheme: light", css)
         for dark_color in ("#121415", "#151819", "#181b1d", "#16191b", "#352326"):
@@ -77,6 +77,22 @@ class UiDesignTests(unittest.TestCase):
         self.assertIn("minmax(0, 1fr)", css)
         self.assertIn(".custom-time", css)
         self.assertIn(".workspace-status", css)
+
+    def test_desktop_restores_187_palette_and_color_roles(self):
+        css = (WEB / "assets/theme-1.9.4.css").read_text(encoding="utf-8")
+        expected = {
+            "canvas": "#eef1f0", "surface": "#ffffff", "surface-subtle": "#f7f9f8",
+            "surface-strong": "#e9efed", "line": "#dbe3e0", "line-strong": "#becbc6",
+            "text": "#17221e", "muted": "#63726c", "muted-2": "#919d98",
+            "accent": "#177a55", "accent-soft": "#eaf5ef", "red": "#ce4b4b",
+            "gold": "#dfb23f", "yellow-soft": "#fbf5e4",
+            "cyan": "#25899b", "cyan-soft": "#eaf5f7",
+        }
+        for token, color in expected.items():
+            self.assertIn(f"--{token}: {color};", css)
+        self.assertIn(".metric.income { background: var(--yellow-soft); }", css)
+        self.assertIn(".metric.kd { background: var(--cyan-soft); }", css)
+        self.assertIn(".presets button.active { background: var(--yellow);", css)
 
     def test_new_external_scripts_parse_in_node(self):
         node = shutil.which("node")

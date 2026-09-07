@@ -1,14 +1,13 @@
 """Application version shared by the desktop app and package builder."""
 
 APP_DISPLAY_NAME = "三角洲战绩本"
-APP_VERSION = "1.9.3"
-LAUNCHER_VERSION = "1.9.3"
+APP_VERSION = "1.9.4"
+LAUNCHER_VERSION = "1.9.4"
 LAUNCHER_PROTOCOL = 2
 
 # Notes for the installed version's About view.
 RELEASE_NOTES = (
-    "修复新版启动后读取版本记录与旧启动器切换冲突导致更新回退；Windows 短暂文件占用支持有限重试，旧版可直接升级。",
-    "本地服务启动检查失败时释放该服务并有限重选端口，保留具体错误诊断；浅色、缓存和自动小程序恢复保持不变。",
+    "恢复 1.8.7 的浅色配色，保留新版布局；新增常驻和失败弹窗中的“打开小程序”按钮，桌面直接调用微信，不依赖本地 HTTP，也不修改账号或缓存。",
 )
 
 # Ordered release history for the published manifest. The final record must
@@ -35,8 +34,7 @@ RELEASE_HISTORY = (
     {
         "version": "1.8.1",
         "release_notes": (
-            "产品正式更名为“三角洲战绩本”，更准确地体现个人赚亏、队友数据对比和游戏时段复盘。",
-            "现有账号、战绩缓存和在线更新方式不受影响。",
+            "产品正式更名为“三角洲战绩本”，体现个人赚亏、队友对比和时段复盘；现有账号、缓存和在线更新方式不受影响。",
         ),
     },
     {
@@ -107,6 +105,13 @@ RELEASE_HISTORY = (
         "release_notes": (
             "桌面恢复浅色界面，保留独立玩法布局、全部历史缓存和清晰的同步提示。",
             "启动或手动刷新遇到小程序旧登录态相关的繁忙提示时，自动打开官方小程序、等待同账号新登录态并重试一次；可关闭取消，不循环弹出、不清除缓存。",
+        ),
+    },
+    {
+        "version": "1.9.3",
+        "release_notes": (
+            "修复新版启动后读取版本记录与旧启动器切换冲突导致更新回退；Windows 短暂文件占用支持有限重试，旧版可直接升级。",
+            "本地服务启动检查失败时释放该服务并有限重选端口，保留具体错误诊断；浅色、缓存和自动小程序恢复保持不变。",
         ),
     },
     {

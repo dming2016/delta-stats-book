@@ -11,7 +11,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 INDEX = ROOT / "web" / "index.html"
-THEME = ROOT / "web" / "assets" / "theme-1.9.3.css"
+THEME = ROOT / "web" / "assets" / "theme-1.9.4.css"
 
 
 class UpdateUiTests(unittest.TestCase):
