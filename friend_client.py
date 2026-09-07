@@ -401,6 +401,7 @@ def available_port() -> int:
 
 def wait_until_ready(port: int, timeout: float = 10.0) -> None:
     deadline = time.monotonic() + timeout
+    last_error = "no response"
     while time.monotonic() < deadline:
         connection = HTTPConnection(
             "127.0.0.1",
@@ -413,11 +414,13 @@ def wait_until_ready(port: int, timeout: float = 10.0) -> None:
             response.read()
             if response.status == 200:
                 return
-        except (OSError, HTTPException):
+            last_error = f"HTTP {response.status}"
+        except (OSError, HTTPException) as error:
+            last_error = f"{type(error).__name__}: {error}"
             time.sleep(0.1)
         finally:
             connection.close()
-    raise RuntimeError("本地战绩服务启动超时")
+    raise RuntimeError(f"本地战绩服务启动超时（端口 {port}，{last_error}）")
 
 
 def serve_local(server) -> None:
@@ -449,7 +452,9 @@ def reconcile_installed_version_after_activation(
 ) -> None:
     deadline = time.monotonic() + max(0.0, timeout)
     while True:
-        if read_current_version(root / "app") == APP_VERSION:
+        # Old launchers replace current.json without retrying reader conflicts.
+        # pending.json is removed only after the activation pointer is committed.
+        if not (root / "app" / "pending.json").exists() and read_current_version(root / "app") == APP_VERSION:
             sync_installed_version_metadata(root, APP_VERSION, LOGGER)
             return
         remaining = deadline - time.monotonic()
@@ -479,23 +484,32 @@ def mark_desktop_ready() -> None:
             LOGGER.exception("Unable to start installed version metadata reconciliation")
 
 
+def start_local_server():
+    for attempt in range(3):
+        server = create_server(port=0)
+        port = server.server_address[1]
+        server_thread = threading.Thread(
+            target=serve_local, args=(server,), name="delta-stats-server", daemon=True,
+        )
+        server_thread.start()
+        try:
+            wait_until_ready(port, timeout=3.0)
+            return server, server_thread
+        except Exception:
+            LOGGER.warning("Local HTTP startup attempt=%s port=%s failed", attempt + 1, port, exc_info=True)
+            server.shutdown()
+            server.server_close()
+            server_thread.join(timeout=3)
+            if attempt == 2:
+                log_thread_stacks()
+                raise
+
+
 def _run_desktop() -> None:
     trace_id = os.environ.get(START_TRACE_ID_ENV, "-")
     LOGGER.info("Desktop Python entry trace=%s", trace_id)
-    port = available_port()
-    server = create_server(port=port)
-    server_thread = threading.Thread(
-        target=serve_local,
-        args=(server,),
-        name="delta-stats-server",
-        daemon=True,
-    )
-    server_thread.start()
-    try:
-        wait_until_ready(port)
-    except Exception:
-        log_thread_stacks()
-        raise
+    server, server_thread = start_local_server()
+    port = server.server_address[1]
     LOGGER.info("Local HTTP ready trace=%s port=%s", trace_id, port)
     url = f"http://127.0.0.1:{port}/delta-stats-page.html"
 

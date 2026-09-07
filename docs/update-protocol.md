@@ -59,6 +59,8 @@ AppDir ZIP 使用稳定 `.part` 文件和 4 MiB 顺序 Range。连续 12 秒无�
 
 正常打开程序时，当前 pointer 指向的版本启动失败也会尝试 `previous.json`。回退成功后，启动器会把 `current.json` 和安装版注册表版本同步回实际运行版本。便携版、安装目录不匹配或注册表不可写时，元数据同步会安全跳过。
 
+候选 App 在 `pending.json` 仍存在时不得打开 `current.json` 轮询安装元数据：Windows 读取句柄会与旧启动器的一次性原子替换冲突，造成候选已就绪却以 WinError 5 回退。1.9.3 的 App 等 pending 删除后才核实 current，因此兼容旧启动器；新启动器同时对 Windows 5/32/33 的短暂替换冲突有限重试两秒，不删除旧指针、不改 ACL。schema 和协议不变。
+
 ## 旧客户端兼容
 
 生产仍提供旧 onefile App、旧下载 ZIP/安装器兼容跳转和扁平 `release_notes`，以便早期客户端迁移到当前布局。`updater_ui.py` 没有被当前源码链调用；它代表已发布旧客户端曾使用的独立窗口，不应被当作当前更新入口。

@@ -20,7 +20,7 @@ import requests
 from account_storage import account_id
 from auth_registry import safe_candidate_summary
 from delta_api import AmsError, SavedAuthError
-from friend_client import wait_until_ready
+from friend_client import start_local_server, wait_until_ready
 from shared_server import SharedStore, build_handler
 from secure_store import InterProcessFileLock
 from stats_server import (
@@ -721,11 +721,8 @@ class StatsServerTests(unittest.TestCase):
             ),
         )
         self.operation_lock_patcher.start()
-        self.server = create_server(port=0)
+        self.server, self.thread = start_local_server()
         self.port = int(self.server.server_address[1])
-        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
-        self.thread.start()
-        wait_until_ready(self.port)
 
     def tearDown(self) -> None:
         self.server.shutdown()

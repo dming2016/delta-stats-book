@@ -73,6 +73,8 @@ $env:DELTA_UPDATE_ALTERNATE_BASE_URLS = ''
 
 ## 常见问题
 
+更新提示失败时先读 launcher/desktop 日志：候选 ready 后 `current.json.new -> current.json` 的 WinError 5 属于激活文件冲突，不是下载失败。1.9.3 避免候选轮询与旧启动器替换并发，并保留 Windows 短暂冲突重试。若本地 HTTP readiness 超时，新版最多创建三个独立回环端口，每次失败先完整关闭旧服务；日志含端口和最后错误。隔离复现曾观察到同进程 TCP 长时间 `SYN_RECEIVED`，底层系统原因尚未确定，不归咎腾讯或账号。`python tools/diagnose_startup.py --recovery` 可进行 60 次纯静态 HTTP 启动验证，不启动窗口或查询账号。
+
 - 用户反馈旧小程序登录态可能返回 `-108 / 腾讯繁忙`，启动/手动刷新应自动拉起小程序、定向恢复同账号并重试一次。不要只让用户等待；但不能因此把所有繁忙或网络错误持久化为登录过期，历史缓存仍应可看。
 - QQ 区也从电脑版微信中的官方小程序读取，不需要电脑版 QQ。
 - “打开微信成功”只表示 Windows 接收了协议请求，不证明已经打开指定页面。
