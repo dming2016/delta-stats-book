@@ -25,7 +25,7 @@ from install_metadata import sync_installed_version_metadata
 from instance_guard import acquire_app_mutex, release_app_mutex
 from secure_store import APP_DIR
 from startup_protocol import STARTUP_READY_FILE_ENV, mark_startup_ready
-from stats_server import create_server
+from stats_server import create_server, open_wechat
 from update_protocol import (
     INSTALL_KIND_ENV,
     INSTALL_KIND_VERSIONED,
@@ -178,6 +178,10 @@ class WindowControls:
             "log_directory": str(LOG_DIR),
             "release_notes": list(RELEASE_NOTES),
         }
+
+    def open_wechat(self) -> dict:
+        """Dispatch the fixed miniapp URI without depending on loopback HTTP."""
+        return open_wechat()
 
     def open_data_directory(self) -> dict[str, str | bool]:
         return open_directory(APP_DIR)

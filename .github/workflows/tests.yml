@@ -73,6 +73,8 @@ jobs:
             $env:UI_PREVIEW_URL = 'http://127.0.0.1:4178'
             node tools/verify_startup.cjs
             if ($LASTEXITCODE -ne 0) { throw 'Desktop startup regression failed' }
+            node tools/verify_miniapp.cjs
+            if ($LASTEXITCODE -ne 0) { throw 'Direct miniapp launch regression failed' }
           } finally {
             Stop-Process -Id $server.Id -ErrorAction SilentlyContinue
           }

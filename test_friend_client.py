@@ -37,6 +37,18 @@ from update_protocol import INSTALL_KIND_ENV, INSTALL_KIND_VERSIONED, INSTALL_RO
 
 
 class FriendClientTests(unittest.TestCase):
+    def test_native_miniapp_launch_uses_fixed_helper_without_http_or_account_operations(self):
+        for result in (
+            {"ok": True, "direct": True, "fallback": False},
+            {"ok": True, "direct": False, "fallback": True},
+            {"ok": False, "message": "unregistered"},
+        ):
+            with self.subTest(result=result), patch("friend_client.open_wechat", return_value=result) as launch:
+                self.assertEqual(WindowControls().open_wechat(), result)
+                launch.assert_called_once_with()
+        with self.assertRaises(TypeError):
+            WindowControls().open_wechat("custom://not-allowed")
+
     def test_old_launcher_single_replace_can_commit_while_new_app_waits(self):
         with TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -566,7 +578,7 @@ class FriendClientTests(unittest.TestCase):
 
     def test_desktop_shell_uses_one_integrated_titlebar(self) -> None:
         html = (Path(__file__).parent / "web" / "index.html").read_text(encoding="utf-8")
-        source = (Path(__file__).parent / "web" / "assets" / "theme-1.9.3.css").read_text(
+        source = (Path(__file__).parent / "web" / "assets" / "theme-1.9.4.css").read_text(
             encoding="utf-8"
         )
         topbar_markup = html.split('<header class="topbar"', 1)[1].split("</header>", 1)[0]
@@ -584,7 +596,7 @@ class FriendClientTests(unittest.TestCase):
         self.assertIn("font-size: 14px", source)
 
     def test_narrow_browser_topbar_can_expand_to_two_rows(self) -> None:
-        source = (Path(__file__).parent / "web" / "assets" / "theme-1.9.3.css").read_text(
+        source = (Path(__file__).parent / "web" / "assets" / "theme-1.9.4.css").read_text(
             encoding="utf-8"
         )
         mobile = source.split("@media (max-width: 720px)", 1)[1]
@@ -699,7 +711,7 @@ class FriendClientTests(unittest.TestCase):
 
     def test_firebreak_single_match_detail_omits_redundant_kd_column(self) -> None:
         html = (Path(__file__).parent / "web" / "index.html").read_text(encoding="utf-8")
-        theme = (Path(__file__).parent / "web" / "assets" / "theme-1.9.3.css").read_text(
+        theme = (Path(__file__).parent / "web" / "assets" / "theme-1.9.4.css").read_text(
             encoding="utf-8"
         )
         detail_source = html.split("function firebreakMatchHtml", 1)[1].split(
@@ -836,7 +848,7 @@ class FriendClientTests(unittest.TestCase):
 
     def test_session_picker_rows_stay_compact_and_scroll_inside_the_popover(self) -> None:
         html = (Path(__file__).parent / "web" / "index.html").read_text(encoding="utf-8")
-        theme = (Path(__file__).parent / "web" / "assets" / "theme-1.9.3.css").read_text(
+        theme = (Path(__file__).parent / "web" / "assets" / "theme-1.9.4.css").read_text(
             encoding="utf-8"
         )
         options_css = html.split(".session-options {", 1)[1].split("}", 1)[0]
@@ -972,7 +984,7 @@ class FriendClientTests(unittest.TestCase):
         self.assertIn("account?.credential_revision", open_source)
         self.assertNotIn("await captureAuthRecoveryRevision", open_source)
         self.assertLess(
-            open_source.index("appUrl('api/wechat/open')"),
+            open_source.index("await launchWechat()"),
             open_source.index("attemptAuthRecovery"),
         )
         self.assertIn("AUTH_RECOVERY_TIMEOUT_MS = 45000", html)
@@ -989,7 +1001,7 @@ class FriendClientTests(unittest.TestCase):
         self.assertIn("syncData({manual: true, autoRecover: false})", discovery_source)
         self.assertIn("attemptAuthDiscovery", open_source)
         self.assertLess(
-            open_source.index("appUrl('api/wechat/open')"),
+            open_source.index("await launchWechat()"),
             open_source.index("attemptAuthDiscovery"),
         )
         self.assertIn("state.authRecoveryRunId += 1", cancellation_source)
