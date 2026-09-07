@@ -67,7 +67,7 @@ class UiDesignTests(unittest.TestCase):
         self.assertNotIn("button.textContent = '↻'", page)
 
     def test_styles_have_one_light_theme_and_reduced_motion(self):
-        css = (WEB / "assets/theme-1.9.2.css").read_text(encoding="utf-8")
+        css = (WEB / "assets/theme-1.9.3.css").read_text(encoding="utf-8")
         self.assertEqual(css.count(":root"), 1)
         self.assertIn("color-scheme: light", css)
         for dark_color in ("#121415", "#151819", "#181b1d", "#16191b", "#352326"):

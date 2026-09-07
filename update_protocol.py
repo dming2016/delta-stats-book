@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import time
 from pathlib import Path
 
 
@@ -70,7 +71,15 @@ def write_pointer(path: Path, version: str) -> None:
         ),
         encoding="utf-8",
     )
-    os.replace(temporary, path)
+    deadline = time.monotonic() + 2.0
+    while True:
+        try:
+            os.replace(temporary, path)
+            return
+        except PermissionError as error:
+            if os.name != "nt" or getattr(error, "winerror", None) not in (5, 32, 33) or time.monotonic() >= deadline:
+                raise
+            time.sleep(0.05)
 
 
 def versioned_app_path(app_root: Path, version: str) -> Path:

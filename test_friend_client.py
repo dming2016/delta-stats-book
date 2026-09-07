@@ -7,6 +7,7 @@ import os
 import shutil
 import socket
 import subprocess
+import threading
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -36,6 +37,95 @@ from update_protocol import INSTALL_KIND_ENV, INSTALL_KIND_VERSIONED, INSTALL_RO
 
 
 class FriendClientTests(unittest.TestCase):
+    def test_old_launcher_single_replace_can_commit_while_new_app_waits(self):
+        with TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "app").mkdir()
+            pending = root / "app/pending.json"
+            pending.write_text("{}", encoding="utf-8")
+            pointer = root / "app/current.json"
+            write_pointer(pointer, "1.9.1")
+            candidate = root / "app/current.json.new"
+            candidate.write_text(f'{{"schema":1,"version":"{APP_VERSION}"}}', encoding="utf-8")
+            waiting = threading.Event()
+            committed = threading.Event()
+
+            def wait_for_launcher(_seconds):
+                waiting.set()
+                committed.wait(timeout=2)
+
+            with (
+                patch("friend_client.time.sleep", side_effect=wait_for_launcher),
+                patch("friend_client.sync_installed_version_metadata") as sync,
+            ):
+                worker = threading.Thread(
+                    target=reconcile_installed_version_after_activation, args=(root,),
+                )
+                worker.start()
+                try:
+                    self.assertTrue(waiting.wait(timeout=2))
+                    # Exactly the old launcher's one-shot write, without new retries.
+                    os.replace(candidate, pointer)
+                    pending.unlink()
+                finally:
+                    committed.set()
+                    worker.join(timeout=3)
+                self.assertFalse(worker.is_alive())
+                sync.assert_called_once_with(root, APP_VERSION, friend_client.LOGGER)
+
+    def test_activation_reader_waits_for_pending_removal_before_opening_pointer(self):
+        with TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "app").mkdir()
+            pending = root / "app/pending.json"
+            pending.write_text("{}", encoding="utf-8")
+            with (
+                patch("friend_client.read_current_version") as read,
+                patch("friend_client.sync_installed_version_metadata") as sync,
+            ):
+                reconcile_installed_version_after_activation(root, timeout=0)
+            read.assert_not_called()
+            sync.assert_not_called()
+            pending.unlink()
+            write_pointer(root / "app/current.json", APP_VERSION)
+            with patch("friend_client.sync_installed_version_metadata") as sync:
+                reconcile_installed_version_after_activation(root, timeout=0)
+            sync.assert_called_once()
+
+    def test_local_startup_retries_with_a_new_bound_server_and_closes_failed_one(self):
+        failed, healthy = MagicMock(), MagicMock()
+        failed.server_address = ("127.0.0.1", 5435)
+        healthy.server_address = ("127.0.0.1", 2098)
+        with (
+            patch("friend_client.create_server", side_effect=[failed, healthy]) as create,
+            patch("friend_client.threading.Thread") as thread,
+            patch("friend_client.wait_until_ready", side_effect=[RuntimeError("timeout"), None]) as ready,
+        ):
+            server, worker = friend_client.start_local_server()
+        self.assertIs(server, healthy)
+        self.assertIs(worker, thread.return_value)
+        self.assertEqual(create.call_count, 2)
+        self.assertEqual(ready.call_args_list[0].args, (5435,))
+        self.assertEqual(ready.call_args_list[1].args, (2098,))
+        failed.shutdown.assert_called_once()
+        failed.server_close.assert_called_once()
+        healthy.server_close.assert_not_called()
+
+    def test_local_startup_failure_is_bounded_and_closes_all_servers(self):
+        servers = [MagicMock() for _ in range(3)]
+        with (
+            patch("friend_client.create_server", side_effect=servers) as create,
+            patch("friend_client.threading.Thread"),
+            patch("friend_client.wait_until_ready", side_effect=RuntimeError("timeout")),
+            patch("friend_client.log_thread_stacks"),
+        ):
+            with self.assertRaisesRegex(RuntimeError, "timeout"):
+                friend_client.start_local_server()
+        self.assertEqual(create.call_count, 3)
+        for server in servers:
+            server.shutdown.assert_called_once()
+            server.server_close.assert_called_once()
+
     def test_wait_until_ready_requires_an_http_response(self) -> None:
         listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         listener.bind(("127.0.0.1", 0))
@@ -476,7 +566,7 @@ class FriendClientTests(unittest.TestCase):
 
     def test_desktop_shell_uses_one_integrated_titlebar(self) -> None:
         html = (Path(__file__).parent / "web" / "index.html").read_text(encoding="utf-8")
-        source = (Path(__file__).parent / "web" / "assets" / "theme-1.9.2.css").read_text(
+        source = (Path(__file__).parent / "web" / "assets" / "theme-1.9.3.css").read_text(
             encoding="utf-8"
         )
         topbar_markup = html.split('<header class="topbar"', 1)[1].split("</header>", 1)[0]
@@ -494,7 +584,7 @@ class FriendClientTests(unittest.TestCase):
         self.assertIn("font-size: 14px", source)
 
     def test_narrow_browser_topbar_can_expand_to_two_rows(self) -> None:
-        source = (Path(__file__).parent / "web" / "assets" / "theme-1.9.2.css").read_text(
+        source = (Path(__file__).parent / "web" / "assets" / "theme-1.9.3.css").read_text(
             encoding="utf-8"
         )
         mobile = source.split("@media (max-width: 720px)", 1)[1]
@@ -609,7 +699,7 @@ class FriendClientTests(unittest.TestCase):
 
     def test_firebreak_single_match_detail_omits_redundant_kd_column(self) -> None:
         html = (Path(__file__).parent / "web" / "index.html").read_text(encoding="utf-8")
-        theme = (Path(__file__).parent / "web" / "assets" / "theme-1.9.2.css").read_text(
+        theme = (Path(__file__).parent / "web" / "assets" / "theme-1.9.3.css").read_text(
             encoding="utf-8"
         )
         detail_source = html.split("function firebreakMatchHtml", 1)[1].split(
@@ -746,7 +836,7 @@ class FriendClientTests(unittest.TestCase):
 
     def test_session_picker_rows_stay_compact_and_scroll_inside_the_popover(self) -> None:
         html = (Path(__file__).parent / "web" / "index.html").read_text(encoding="utf-8")
-        theme = (Path(__file__).parent / "web" / "assets" / "theme-1.9.2.css").read_text(
+        theme = (Path(__file__).parent / "web" / "assets" / "theme-1.9.3.css").read_text(
             encoding="utf-8"
         )
         options_css = html.split(".session-options {", 1)[1].split("}", 1)[0]
