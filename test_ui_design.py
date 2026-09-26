@@ -108,7 +108,7 @@ class UiDesignTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_hero_bitmap_exists_and_download_is_not_a_fake_action(self):
-        css = (WEB / "assets/download-page-v7.css").read_text(encoding="utf-8")
+        css = (WEB / "assets/download-page-v8.css").read_text(encoding="utf-8")
         for relative in re.findall(r'url\("([^"]+)"\)', css):
             self.assertTrue((WEB / "assets" / relative).is_file(), relative)
         page = (WEB / "download.html").read_text(encoding="utf-8")
