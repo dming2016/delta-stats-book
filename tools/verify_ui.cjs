@@ -133,6 +133,52 @@ async function screenshot(page, name) {
     await screenshot(page, 'workspace-no-account');
     assert.equal(await page.locator('#connectButton').isVisible(), true);
     results.push({view: 'no-account', ...await bounds(page)});
+    if (updateAssets) {
+      // Phone visitors need narrow renders: a desktop-width screenshot is illegible at 390px.
+      const mobile = await browser.newPage({viewport: {width: 390, height: 844}, deviceScaleFactor: 1});
+      mobile.on('pageerror', error => errors.push(error.message));
+      const scrollToBlock = (selector, pad) => mobile.evaluate(([sel, p]) => {
+        const container = document.getElementById('contentScroll');
+        const target = document.querySelector(sel);
+        const containerRect = container.getBoundingClientRect();
+        container.scrollTop += (target.getBoundingClientRect().top - containerRect.top) - p;
+      }, [selector, pad]);
+      const mobileAsset = (buffer, extract, name) => require('sharp')(buffer)
+        .extract(extract).toFile(path.join(root, 'web/assets', name));
+
+      await mobile.goto(base + '/delta-stats-page.html');
+      await mobile.locator('.match').first().waitFor();
+      await settled(mobile);
+      await scrollToBlock('.metrics', 12);
+      await mobile.waitForTimeout(300);
+      await mobileAsset(await mobile.screenshot(), {left: 0, top: 0, width: 390, height: 620},
+        'workspace-overview-m-1.9.4.png');
+
+      await mobile.reload();
+      await mobile.locator('.match').first().waitFor();
+      await mobile.locator('#favoriteFilters input').first().check();
+      await mobile.locator('.friend-metric-row').first().waitFor();
+      await settled(mobile);
+      await scrollToBlock('.friend-comparison', 12);
+      await mobile.waitForTimeout(300);
+      await mobileAsset(await mobile.screenshot(), {left: 0, top: 0, width: 390, height: 400},
+        'workspace-friends-m-1.9.4.png');
+
+      await mobile.reload();
+      await mobile.locator('.match').first().waitFor();
+      await mobile.locator('#sessionPickerSummary').click();
+      await mobile.locator('.session-option').first().waitFor();
+      await settled(mobile);
+      await mobile.waitForTimeout(300);
+      const pickerTop = await mobile.evaluate(() => {
+        const list = document.querySelector('.session-option').closest('div');
+        return Math.round(list.getBoundingClientRect().top - 24);
+      });
+      await mobileAsset(await mobile.screenshot(),
+        {left: 0, top: pickerTop, width: 390, height: Math.min(844 - pickerTop, 400)},
+        'workspace-sessions-m-1.9.4.png');
+      await mobile.close();
+    }
     if (!shotsOnly) {
       await page.close();
       page = await browser.newPage({viewport: {width: 1440, height: 980}, deviceScaleFactor: 1});

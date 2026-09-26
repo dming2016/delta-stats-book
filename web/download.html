@@ -5,13 +5,14 @@
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="三角洲战绩本，Windows 本地战绩工具。查看烽火净收益、固定队友共同局表现与每次开黑时段，独立复盘全面战场。">
-  <meta name="theme-color" content="#121415">
+  <meta name="theme-color" content="#eef1f0">
   <title>三角洲战绩本 · Windows 战绩复盘工具</title>
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32-v2.png">
   <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16-v2.png">
   <link rel="apple-touch-icon" href="assets/app-icon-v2.png">
-  <link rel="stylesheet" href="assets/download-page-v4.css">
-  <link rel="preload" as="image" href="assets/workspace-hero-1.9.0.png">
+  <link rel="stylesheet" href="assets/download-page-v6.css">
+  <link rel="preload" as="image" href="assets/workspace-hero-1.9.0.png" media="(min-width: 721px)">
+  <link rel="preload" as="image" href="assets/workspace-overview-m-1.9.4.png" media="(max-width: 720px)">
   <script defer src="assets/lucide-0.468.0.min.js"></script>
   <script defer src="assets/download-1.9.4.js"></script>
 </head>
@@ -38,7 +39,12 @@
         </div>
         <p class="hero-requirements">Windows 10 / 11 <span>·</span> 微信区 / QQ 区 <span>·</span> 非官方个人工具</p>
       </div>
-      <div class="hero-product" role="img" aria-label="新版三角洲战绩本程序实景：左侧玩法导航、收益汇总与逐局战绩。画面为演示数据。"></div>
+      <div class="hero-product">
+        <picture>
+          <source media="(max-width: 720px)" srcset="assets/workspace-overview-m-1.9.4.png">
+          <img src="assets/workspace-hero-1.9.0.png" width="1264" height="515" alt="新版三角洲战绩本程序实景：玩法导航、收益汇总与逐局战绩。画面为演示数据。" fetchpriority="high">
+        </picture>
+      </div>
       <span class="hero-image-label">程序实景 / 演示数据</span>
     </section>
     <div class="trust-band"><div class="site-width trust-grid">
@@ -54,15 +60,33 @@
       </div>
       <div class="preview-panel" id="panel-overview" role="tabpanel" aria-labelledby="tab-overview" tabindex="0">
         <div class="preview-caption"><h3>带出多少，和净赚多少，分开算。</h3><p>净收益、带出价值、KD 与撤离表现，一眼看清。再按地图和难度，找到值得复盘的那一局。</p></div>
-        <img class="product-screenshot" src="assets/workspace-overview-1.9.0.png" width="1500" height="940" alt="个人战绩页实景，展示收益汇总、地图筛选和逐局战绩，数据为虚构演示" loading="lazy">
+        <a class="shot" href="assets/workspace-overview-1.9.0.png" target="_blank" rel="noopener">
+          <picture>
+            <source media="(max-width: 720px)" srcset="assets/workspace-overview-m-1.9.4.png">
+            <img class="product-screenshot" src="assets/workspace-overview-1.9.0.png" width="1500" height="940" alt="个人战绩页实景，展示收益汇总、地图筛选和逐局战绩，数据为虚构演示" loading="lazy">
+          </picture>
+          <span class="shot-hint">点开看大图</span>
+        </a>
       </div>
       <div class="preview-panel" id="panel-friends" role="tabpanel" aria-labelledby="tab-friends" tabindex="0" hidden>
         <div class="preview-caption"><h3>一起打的局，放在一起比。</h3><p>固定常玩的朋友，对照共同局里的带出、KD、击杀和撤离表现。好友入场成本不可获取，不计算好友净收益。</p></div>
-        <img class="product-screenshot" src="assets/workspace-friends-1.9.0.png" width="1500" height="940" alt="固定队友筛选与共同局数据比较实景，数据为虚构演示" loading="lazy">
+        <a class="shot" href="assets/workspace-friends-1.9.0.png" target="_blank" rel="noopener">
+          <picture>
+            <source media="(max-width: 720px)" srcset="assets/workspace-friends-m-1.9.4.png">
+            <img class="product-screenshot" src="assets/workspace-friends-1.9.0.png" width="1500" height="940" alt="固定队友筛选与共同局数据比较实景，数据为虚构演示" loading="lazy">
+          </picture>
+          <span class="shot-hint">点开看大图</span>
+        </a>
       </div>
       <div class="preview-panel" id="panel-sessions" role="tabpanel" aria-labelledby="tab-sessions" tabindex="0" hidden>
         <div class="preview-caption"><h3>凌晨一场，晚上一场，各有各的账。</h3><p>自动识别连续开黑时段。只看其中一段，或多选几段合并复盘，不让同一天的赚亏相互掩盖。</p></div>
-        <img class="product-screenshot" src="assets/workspace-sessions-1.9.0.png" width="1500" height="940" alt="游戏时段浮层实景，显示局数、净收益和时段多选，数据为虚构演示" loading="lazy">
+        <a class="shot" href="assets/workspace-sessions-1.9.0.png" target="_blank" rel="noopener">
+          <picture>
+            <source media="(max-width: 720px)" srcset="assets/workspace-sessions-m-1.9.4.png">
+            <img class="product-screenshot" src="assets/workspace-sessions-1.9.0.png" width="1500" height="940" alt="游戏时段浮层实景，显示局数、净收益和时段多选，数据为虚构演示" loading="lazy">
+          </picture>
+          <span class="shot-hint">点开看大图</span>
+        </a>
       </div>
       <p class="image-note"><i data-lucide="scan-eye" aria-hidden="true"></i>以上为实际程序页面，使用虚构演示数据，不包含用户信息。</p>
       <dl class="detail-band"><div><dt>逐局详情</dt><dd>时间、结果、带出、净收益、击杀、死亡、AI 击杀与同队成员。</dd></div><div><dt>全面战场，独立复盘</dt><dd>胜负、得分、KD / KDA、救援与段位趋势，不与烽火收益混算。</dd></div></dl>

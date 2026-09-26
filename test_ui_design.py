@@ -25,6 +25,11 @@ class PageParser(HTMLParser):
             self.ids.append(attrs["id"])
         if tag in {"script", "img"} and attrs.get("src"):
             self.resources.append(attrs["src"])
+        if tag == "source" and attrs.get("srcset"):
+            self.resources.extend(
+                candidate.strip().split()[0] for candidate in attrs["srcset"].split(",")
+                if candidate.strip()
+            )
         if tag == "link" and attrs.get("href"):
             self.resources.append(attrs["href"])
         if attrs.get("role") == "tab":
@@ -103,7 +108,7 @@ class UiDesignTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_hero_bitmap_exists_and_download_is_not_a_fake_action(self):
-        css = (WEB / "assets/download-page-v4.css").read_text(encoding="utf-8")
+        css = (WEB / "assets/download-page-v6.css").read_text(encoding="utf-8")
         for relative in re.findall(r'url\("([^"]+)"\)', css):
             self.assertTrue((WEB / "assets" / relative).is_file(), relative)
         page = (WEB / "download.html").read_text(encoding="utf-8")
@@ -111,6 +116,11 @@ class UiDesignTests(unittest.TestCase):
         self.assertIn('href="downloads/DeltaStatsAssistant-Setup.exe"', page)
         self.assertIn('href="downloads/DeltaStatsAssistant.zip"', page)
         self.assertIn("虚构演示数据", page)
+        # Phone visitors get narrow app renders instead of a desktop-width screenshot.
+        for mobile_asset in ("workspace-overview-m-1.9.4.png", "workspace-friends-m-1.9.4.png",
+                             "workspace-sessions-m-1.9.4.png"):
+            self.assertIn(f'srcset="assets/{mobile_asset}"', page)
+            self.assertTrue((WEB / "assets" / mobile_asset).is_file(), mobile_asset)
 
 
 if __name__ == "__main__":
