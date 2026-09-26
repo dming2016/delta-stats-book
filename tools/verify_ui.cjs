@@ -51,22 +51,22 @@ async function screenshot(page, name) {
     results.push({view: 'workspace-desktop', ...await bounds(page)});
     // The screenshots use the actual application renderer with synthetic data.
     if (updateAssets) {
-      await page.screenshot({path: path.join(root, 'web/assets/workspace-overview-1.9.0.png')});
-      await require('sharp')(path.join(root, 'web/assets/workspace-overview-1.9.0.png'))
+      await page.screenshot({path: path.join(root, 'web/assets/workspace-overview-1.9.4.png')});
+      await require('sharp')(path.join(root, 'web/assets/workspace-overview-1.9.4.png'))
         .extract({left: 204, top: 396, width: 1264, height: 515})
-        .toFile(path.join(root, 'web/assets/workspace-hero-1.9.0.png'));
+        .toFile(path.join(root, 'web/assets/workspace-hero-1.9.4.png'));
     }
     await page.locator('#favoriteFilters input').first().check();
     await page.locator('.friend-metric-row').first().waitFor();
     await screenshot(page, 'workspace-friends');
-    if (updateAssets) await page.screenshot({path: path.join(root, 'web/assets/workspace-friends-1.9.0.png')});
+    if (updateAssets) await page.screenshot({path: path.join(root, 'web/assets/workspace-friends-1.9.4.png')});
     await page.locator('#resetFiltersButton').click();
     await settled(page);
     assert.equal(await page.locator('#favoriteFilters input:checked').count(), 0);
     await page.locator('#sessionPickerSummary').click();
     await page.locator('.session-option').first().waitFor();
     await screenshot(page, 'workspace-sessions');
-    if (updateAssets) await page.screenshot({path: path.join(root, 'web/assets/workspace-sessions-1.9.0.png')});
+    if (updateAssets) await page.screenshot({path: path.join(root, 'web/assets/workspace-sessions-1.9.4.png')});
     await page.locator('#sessionOptions input').first().check();
     await page.locator('#closeSessionsButton').click();
     await settled(page);
