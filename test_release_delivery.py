@@ -849,7 +849,7 @@ class ReleaseDeliveryTests(unittest.TestCase):
 
     def test_download_page_does_not_advertise_firebreak_single_match_kd(self):
         page = (ROOT / "web" / "download.html").read_text(encoding="utf-8")
-        detail_copy = page.split("<dt>逐局详情</dt>", 1)[1].split("</dd>", 1)[0]
+        detail_copy = page.split("逐局详情", 1)[1].split("</dd>", 1)[0]
 
         self.assertNotIn("KD", detail_copy)
         self.assertIn("击杀、死亡、AI 击杀", detail_copy)
