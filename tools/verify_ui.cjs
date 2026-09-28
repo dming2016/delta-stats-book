@@ -17,6 +17,13 @@ async function settled(page) {
   await page.evaluate(() => Promise.all([...document.images]
     .filter(image => image.getClientRects().length && image.loading !== 'lazy')
     .map(image => image.decode().catch(() => {}))));
+  await page.waitForFunction(() => [...document.images].every(image => {
+    const rect = image.getBoundingClientRect();
+    const visible = rect.width && rect.height
+      && rect.top < innerHeight && rect.bottom > 0
+      && rect.left < innerWidth && rect.right > 0;
+    return !visible || (image.complete && image.naturalWidth > 0);
+  }), null, {timeout: 15000});
 }
 async function bounds(page) {
   return page.evaluate(() => {
@@ -35,6 +42,35 @@ async function screenshot(page, name) {
   await page.screenshot({path: path.join(output, name + '.png'), fullPage: true});
 }
 
+async function verifyTheme(page) {
+  await page.waitForFunction(() =>
+    getComputedStyle(document.querySelector('#difficultySegments .active')).backgroundColor === 'rgb(255, 255, 255)');
+  const colors = await page.evaluate(() => Object.fromEntries([
+    '.workspace-rail', '.content-scroll', '.workspace-rail .active',
+    '#difficultySegments .active', '#presets .active', '.miniapp-launch',
+    '.check-option input', '.metric.primary .metric-value', '.match.failure .negative',
+    '.metric.primary', '.metric.income', '.metric.kd',
+  ].map(selector => {
+    const style = getComputedStyle(document.querySelector(selector));
+    return [selector, {background: style.backgroundColor, color: style.color, accent: style.accentColor}];
+  })));
+  assert.equal(colors['.workspace-rail'].background, 'rgb(243, 243, 243)');
+  assert.equal(colors['.content-scroll'].background, 'rgb(255, 255, 255)');
+  assert.equal(colors['.workspace-rail .active'].background, 'rgb(229, 229, 229)');
+  for (const selector of ['#difficultySegments .active', '#presets .active']) {
+    assert.equal(colors[selector].background, 'rgb(255, 255, 255)');
+    assert.equal(colors[selector].color, 'rgb(36, 36, 36)');
+  }
+  assert.equal(colors['.miniapp-launch'].background, 'rgb(36, 36, 36)');
+  assert.equal(colors['.check-option input'].accent, 'rgb(36, 36, 36)');
+  assert.equal(colors['.metric.primary .metric-value'].color, 'rgb(36, 130, 87)');
+  assert.equal(colors['.match.failure .negative'].color, 'rgb(195, 78, 73)');
+  for (const selector of ['.metric.primary', '.metric.income', '.metric.kd']) {
+    assert.equal(colors[selector].background, 'rgba(0, 0, 0, 0)');
+  }
+  return colors;
+}
+
 (async () => {
   const identity = await fetch(base + '/api/preview').then(response => response.json());
   assert.deepEqual(identity, {synthetic_data_only: true, writes_enabled: false},
@@ -48,25 +84,25 @@ async function screenshot(page, name) {
     await page.goto(base + '/delta-stats-page.html');
     await page.locator('.match').first().waitFor();
     await screenshot(page, 'workspace-desktop');
-    results.push({view: 'workspace-desktop', ...await bounds(page)});
+    results.push({view: 'workspace-desktop', ...await bounds(page), theme: await verifyTheme(page)});
     // The screenshots use the actual application renderer with synthetic data.
     if (updateAssets) {
-      await page.screenshot({path: path.join(root, 'web/assets/workspace-overview-1.9.4.png')});
-      await require('sharp')(path.join(root, 'web/assets/workspace-overview-1.9.4.png'))
+      await page.screenshot({path: path.join(root, 'web/assets/workspace-overview-1.9.5.png')});
+      await require('sharp')(path.join(root, 'web/assets/workspace-overview-1.9.5.png'))
         .extract({left: 204, top: 396, width: 1264, height: 515})
-        .toFile(path.join(root, 'web/assets/workspace-hero-1.9.4.png'));
+        .toFile(path.join(root, 'web/assets/workspace-hero-1.9.5.png'));
     }
     await page.locator('#favoriteFilters input').first().check();
     await page.locator('.friend-metric-row').first().waitFor();
     await screenshot(page, 'workspace-friends');
-    if (updateAssets) await page.screenshot({path: path.join(root, 'web/assets/workspace-friends-1.9.4.png')});
+    if (updateAssets) await page.screenshot({path: path.join(root, 'web/assets/workspace-friends-1.9.5.png')});
     await page.locator('#resetFiltersButton').click();
     await settled(page);
     assert.equal(await page.locator('#favoriteFilters input:checked').count(), 0);
     await page.locator('#sessionPickerSummary').click();
     await page.locator('.session-option').first().waitFor();
     await screenshot(page, 'workspace-sessions');
-    if (updateAssets) await page.screenshot({path: path.join(root, 'web/assets/workspace-sessions-1.9.4.png')});
+    if (updateAssets) await page.screenshot({path: path.join(root, 'web/assets/workspace-sessions-1.9.5.png')});
     await page.locator('#sessionOptions input').first().check();
     await page.locator('#closeSessionsButton').click();
     await settled(page);
@@ -150,9 +186,9 @@ async function screenshot(page, name) {
       await mobile.locator('.match').first().waitFor();
       await settled(mobile);
       await scrollToBlock('.metrics', 12);
-      await mobile.waitForTimeout(300);
+      await settled(mobile);
       await mobileAsset(await mobile.screenshot(), {left: 0, top: 0, width: 390, height: 620},
-        'workspace-overview-m-1.9.4.png');
+        'workspace-overview-m-1.9.5.png');
 
       await mobile.reload();
       await mobile.locator('.match').first().waitFor();
@@ -160,23 +196,22 @@ async function screenshot(page, name) {
       await mobile.locator('.friend-metric-row').first().waitFor();
       await settled(mobile);
       await scrollToBlock('.friend-comparison', 12);
-      await mobile.waitForTimeout(300);
+      await settled(mobile);
       await mobileAsset(await mobile.screenshot(), {left: 0, top: 0, width: 390, height: 400},
-        'workspace-friends-m-1.9.4.png');
+        'workspace-friends-m-1.9.5.png');
 
       await mobile.reload();
       await mobile.locator('.match').first().waitFor();
       await mobile.locator('#sessionPickerSummary').click();
       await mobile.locator('.session-option').first().waitFor();
       await settled(mobile);
-      await mobile.waitForTimeout(300);
       const pickerTop = await mobile.evaluate(() => {
         const list = document.querySelector('.session-option').closest('div');
         return Math.round(list.getBoundingClientRect().top - 24);
       });
       await mobileAsset(await mobile.screenshot(),
         {left: 0, top: pickerTop, width: 390, height: Math.min(844 - pickerTop, 400)},
-        'workspace-sessions-m-1.9.4.png');
+        'workspace-sessions-m-1.9.5.png');
       await mobile.close();
     }
     if (!shotsOnly) {

@@ -34,9 +34,9 @@ fs.mkdirSync(output, {recursive: true});
     await page.addInitScript(useNative => {
       window.pywebview = {api: {
         get_window_state: async () => ({maximized: false}),
-        get_app_info: async () => ({version: '1.9.4', release_notes: []}),
-        check_for_update: async () => ({phase: 'up_to_date', current_version: '1.9.4'}),
-        get_update_status: async () => ({phase: 'up_to_date', current_version: '1.9.4'}),
+        get_app_info: async () => ({version: '1.9.5', release_notes: []}),
+        check_for_update: async () => ({phase: 'up_to_date', current_version: '1.9.5'}),
+        get_update_status: async () => ({phase: 'up_to_date', current_version: '1.9.5'}),
       }};
       if (useNative) window.pywebview.api.open_wechat = window.nativeOpenWechat;
     }, native);
@@ -99,7 +99,7 @@ fs.mkdirSync(output, {recursive: true});
       rail: getComputedStyle(document.querySelector('.workspace-rail')).backgroundColor,
       dialog: getComputedStyle(document.getElementById('recoveryDialog')).backgroundColor,
     }));
-    assert.deepEqual(colors, {scheme: 'light', canvas: 'rgb(238, 241, 240)', rail: 'rgb(255, 255, 255)', dialog: 'rgb(255, 255, 255)'});
+    assert.deepEqual(colors, {scheme: 'light', canvas: 'rgb(243, 243, 243)', rail: 'rgb(243, 243, 243)', dialog: 'rgb(255, 255, 255)'});
     await page.screenshot({path: path.join(output, 'light-cache-startup.png')});
     await page.locator('#presets [data-days="7"]').click();
     await page.locator('#cacheNotice').waitFor({state: 'visible'});

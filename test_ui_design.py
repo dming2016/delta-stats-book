@@ -7,9 +7,12 @@ import unittest
 from html.parser import HTMLParser
 from pathlib import Path
 
+from app_version import APP_VERSION
+
 
 ROOT = Path(__file__).resolve().parent
 WEB = ROOT / "web"
+THEME = WEB / "assets" / f"theme-{APP_VERSION}.css"
 
 
 class PageParser(HTMLParser):
@@ -72,7 +75,7 @@ class UiDesignTests(unittest.TestCase):
         self.assertNotIn("button.textContent = '↻'", page)
 
     def test_styles_have_one_light_theme_and_reduced_motion(self):
-        css = (WEB / "assets/theme-1.9.4.css").read_text(encoding="utf-8")
+        css = THEME.read_text(encoding="utf-8")
         self.assertEqual(css.count(":root"), 1)
         self.assertIn("color-scheme: light", css)
         for dark_color in ("#121415", "#151819", "#181b1d", "#16191b", "#352326"):
@@ -83,21 +86,32 @@ class UiDesignTests(unittest.TestCase):
         self.assertIn(".custom-time", css)
         self.assertIn(".workspace-status", css)
 
-    def test_desktop_restores_187_palette_and_color_roles(self):
-        css = (WEB / "assets/theme-1.9.4.css").read_text(encoding="utf-8")
+    def test_desktop_separates_neutral_controls_from_semantic_colors(self):
+        css = THEME.read_text(encoding="utf-8")
         expected = {
-            "canvas": "#eef1f0", "surface": "#ffffff", "surface-subtle": "#f7f9f8",
-            "surface-strong": "#e9efed", "line": "#dbe3e0", "line-strong": "#becbc6",
-            "text": "#17221e", "muted": "#63726c", "muted-2": "#919d98",
-            "accent": "#177a55", "accent-soft": "#eaf5ef", "red": "#ce4b4b",
-            "gold": "#dfb23f", "yellow-soft": "#fbf5e4",
-            "cyan": "#25899b", "cyan-soft": "#eaf5f7",
+            "canvas": "#f3f3f3", "surface": "#ffffff", "surface-subtle": "#f9f9f9",
+            "surface-strong": "#eeeeee", "line": "#e8e8e8", "line-strong": "#d4d4d4",
+            "text": "#242424", "muted": "#6b6b6b", "muted-2": "#808080",
+            "accent": "#242424", "accent-soft": "#eeeeee",
+            "green": "#248257", "green-soft": "#edf7f0", "red": "#c34e49",
+            "gold": "#a97819", "yellow-soft": "#fbf5e7",
+            "cyan": "#707070", "cyan-soft": "#f3f3f3",
         }
         for token, color in expected.items():
             self.assertIn(f"--{token}: {color};", css)
-        self.assertIn(".metric.income { background: var(--yellow-soft); }", css)
-        self.assertIn(".metric.kd { background: var(--cyan-soft); }", css)
-        self.assertIn(".presets button.active { background: var(--yellow);", css)
+        self.assertNotIn("background: var(--yellow)", css)
+        self.assertNotIn("background: var(--yellow-soft)", css)
+        self.assertNotIn("background: var(--cyan-soft)", css)
+        self.assertIn(".metric.primary .metric-value { color: var(--green); }", css)
+        self.assertIn(".metric.primary .metric-value.negative { color: var(--red); }", css)
+        self.assertIn(".positive, .result.success { color: var(--green); }", css)
+        self.assertIn(".presets button.active { background: var(--surface);", css)
+
+    def test_workspace_loads_the_current_versioned_theme(self):
+        parser = PageParser()
+        parser.feed((WEB / "index.html").read_text(encoding="utf-8"))
+        themes = [resource for resource in parser.resources if resource.startswith("assets/theme-")]
+        self.assertEqual(themes, [f"assets/theme-{APP_VERSION}.css"])
 
     def test_new_external_scripts_parse_in_node(self):
         node = shutil.which("node")
@@ -117,8 +131,9 @@ class UiDesignTests(unittest.TestCase):
         self.assertIn('href="downloads/DeltaStatsAssistant.zip"', page)
         self.assertIn("虚构演示数据", page)
         # Phone visitors get narrow app renders instead of a desktop-width screenshot.
-        for mobile_asset in ("workspace-overview-m-1.9.4.png", "workspace-friends-m-1.9.4.png",
-                             "workspace-sessions-m-1.9.4.png"):
+        for mobile_asset in (f"workspace-overview-m-{APP_VERSION}.png",
+                             f"workspace-friends-m-{APP_VERSION}.png",
+                             f"workspace-sessions-m-{APP_VERSION}.png"):
             self.assertIn(f'srcset="assets/{mobile_asset}"', page)
             self.assertTrue((WEB / "assets" / mobile_asset).is_file(), mobile_asset)
 
