@@ -1,30 +1,19 @@
 """Application version shared by the desktop app and package builder."""
 
 APP_DISPLAY_NAME = "三角洲战绩本"
-APP_VERSION = "1.9.5"
-LAUNCHER_VERSION = "1.9.5"
+APP_VERSION = "1.9.6"
+LAUNCHER_VERSION = "1.9.6"
 LAUNCHER_PROTOCOL = 2
 
 # Notes for the installed version's About view.
 RELEASE_NOTES = (
-    "统一桌面浅色层次：灰色侧栏、白色工作区、深色主按钮和中性选中状态，红绿保留给盈亏与状态；保留原有布局、功能和账号缓存。",
+    "重做桌面界面的排版与层级：数字列统一对齐、指标说明文字对齐到同一行、展开明细的表头跟随吸顶；窗口拉窄时不再隐藏时长与队友两列。",
+    "补齐交互反馈：悬停、按下、弹窗与展开都有短促动画，并修正小字对比度与状态色；布局、玩法模型、账号缓存、同步和更新方式不变。",
 )
 
 # Ordered release history for the published manifest. The final record must
 # always describe APP_VERSION and use RELEASE_NOTES.
 RELEASE_HISTORY = (
-    {
-        "version": "1.7.3",
-        "release_notes": (
-            "好友筛选支持“匹配任一”和“同时在场”；游戏时段支持多选及非连续精确筛选；修复更新提示关闭后无法再次打开。",
-        ),
-    },
-    {
-        "version": "1.7.4",
-        "release_notes": (
-            "更新中心和关于页支持查看当前版本更新内容，并修复旧版本升级后无法回看更新说明的问题。",
-        ),
-    },
     {
         "version": "1.8.0",
         "release_notes": (
@@ -117,6 +106,12 @@ RELEASE_HISTORY = (
         "version": "1.9.4",
         "release_notes": (
             "恢复 1.8.7 的浅色配色，保留新版布局；新增常驻和失败弹窗中的“打开小程序”按钮，桌面直接调用微信，不依赖本地 HTTP，也不修改账号或缓存。",
+        ),
+    },
+    {
+        "version": "1.9.5",
+        "release_notes": (
+            "统一桌面浅色层次：灰色侧栏、白色工作区、深色主按钮和中性选中状态，红绿保留给盈亏与状态；保留原有布局、功能和账号缓存。",
         ),
     },
     {

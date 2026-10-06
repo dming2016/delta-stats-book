@@ -9,7 +9,7 @@
 
 [下载安装版](https://zhou.opendeep.top/) · [版本与源码](https://github.com/dming2016/delta-stats-book/releases) · [报告问题](https://github.com/dming2016/delta-stats-book/issues/new/choose)
 
-![战绩工作区，虚构数据与原创地图占位图](web/assets/workspace-overview-1.9.5.png)
+![战绩工作区，虚构数据与原创地图占位图](web/assets/workspace-overview-1.9.6.png)
 
 ## 能做什么
 
