@@ -24,6 +24,14 @@ async function settled(page) {
       && rect.left < innerWidth && rect.right > 0;
     return !visible || (image.complete && image.naturalWidth > 0);
   }), null, {timeout: 15000});
+  // 等入场与弹窗动效跑完，否则会把半透明的中间帧当成界面状态存证。
+  // 无限循环的动画（同步转圈）不会 finished，必须排除，并给一个上限。
+  await page.evaluate(() => Promise.race([
+    Promise.all(document.getAnimations()
+      .filter(animation => (animation.effect?.getComputedTiming?.().iterations ?? 1) !== Infinity)
+      .map(animation => animation.finished.catch(() => {}))),
+    new Promise(resolve => setTimeout(resolve, 1500)),
+  ])).catch(() => {});
 }
 async function bounds(page) {
   return page.evaluate(() => {
@@ -87,22 +95,22 @@ async function verifyTheme(page) {
     results.push({view: 'workspace-desktop', ...await bounds(page), theme: await verifyTheme(page)});
     // The screenshots use the actual application renderer with synthetic data.
     if (updateAssets) {
-      await page.screenshot({path: path.join(root, 'web/assets/workspace-overview-1.9.5.png')});
-      await require('sharp')(path.join(root, 'web/assets/workspace-overview-1.9.5.png'))
+      await page.screenshot({path: path.join(root, 'web/assets/workspace-overview-1.9.6.png')});
+      await require('sharp')(path.join(root, 'web/assets/workspace-overview-1.9.6.png'))
         .extract({left: 204, top: 396, width: 1264, height: 515})
-        .toFile(path.join(root, 'web/assets/workspace-hero-1.9.5.png'));
+        .toFile(path.join(root, 'web/assets/workspace-hero-1.9.6.png'));
     }
     await page.locator('#favoriteFilters input').first().check();
     await page.locator('.friend-metric-row').first().waitFor();
     await screenshot(page, 'workspace-friends');
-    if (updateAssets) await page.screenshot({path: path.join(root, 'web/assets/workspace-friends-1.9.5.png')});
+    if (updateAssets) await page.screenshot({path: path.join(root, 'web/assets/workspace-friends-1.9.6.png')});
     await page.locator('#resetFiltersButton').click();
     await settled(page);
     assert.equal(await page.locator('#favoriteFilters input:checked').count(), 0);
     await page.locator('#sessionPickerSummary').click();
     await page.locator('.session-option').first().waitFor();
     await screenshot(page, 'workspace-sessions');
-    if (updateAssets) await page.screenshot({path: path.join(root, 'web/assets/workspace-sessions-1.9.5.png')});
+    if (updateAssets) await page.screenshot({path: path.join(root, 'web/assets/workspace-sessions-1.9.6.png')});
     await page.locator('#sessionOptions input').first().check();
     await page.locator('#closeSessionsButton').click();
     await settled(page);
@@ -188,7 +196,7 @@ async function verifyTheme(page) {
       await scrollToBlock('.metrics', 12);
       await settled(mobile);
       await mobileAsset(await mobile.screenshot(), {left: 0, top: 0, width: 390, height: 620},
-        'workspace-overview-m-1.9.5.png');
+        'workspace-overview-m-1.9.6.png');
 
       await mobile.reload();
       await mobile.locator('.match').first().waitFor();
@@ -198,7 +206,7 @@ async function verifyTheme(page) {
       await scrollToBlock('.friend-comparison', 12);
       await settled(mobile);
       await mobileAsset(await mobile.screenshot(), {left: 0, top: 0, width: 390, height: 400},
-        'workspace-friends-m-1.9.5.png');
+        'workspace-friends-m-1.9.6.png');
 
       await mobile.reload();
       await mobile.locator('.match').first().waitFor();
@@ -211,7 +219,7 @@ async function verifyTheme(page) {
       });
       await mobileAsset(await mobile.screenshot(),
         {left: 0, top: pickerTop, width: 390, height: Math.min(844 - pickerTop, 400)},
-        'workspace-sessions-m-1.9.5.png');
+        'workspace-sessions-m-1.9.6.png');
       await mobile.close();
     }
     if (!shotsOnly) {

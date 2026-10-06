@@ -90,9 +90,12 @@ class UiDesignTests(unittest.TestCase):
         css = THEME.read_text(encoding="utf-8")
         expected = {
             "canvas": "#f3f3f3", "surface": "#ffffff", "surface-subtle": "#f9f9f9",
-            "surface-strong": "#eeeeee", "line": "#e8e8e8", "line-strong": "#d4d4d4",
-            "text": "#242424", "muted": "#6b6b6b", "muted-2": "#808080",
-            "accent": "#242424", "accent-soft": "#eeeeee",
+            "surface-strong": "#eeeeee", "surface-active": "#e5e5e5",
+            "line": "#e8e8e8", "line-strong": "#d4d4d4",
+            "text": "#242424",
+            # 灰阶按「最深画布 #f3f3f3 上也要 ≥4.5:1」重排：原 #808080 只有 3.95:1，
+            # #6b6b6b 在画布上也只有 4.8:1，两级分不开，因此定为下面这两档。
+            "muted": "#5f5f63", "muted-2": "#69696d", "accent": "#242424", "accent-soft": "#eeeeee",
             "green": "#248257", "green-soft": "#edf7f0", "red": "#c34e49",
             "gold": "#a97819", "yellow-soft": "#fbf5e7",
             "cyan": "#707070", "cyan-soft": "#f3f3f3",
