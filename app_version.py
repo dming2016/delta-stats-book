@@ -1,13 +1,13 @@
 """Application version shared by the desktop app and package builder."""
 
 APP_DISPLAY_NAME = "三角洲战绩本"
-APP_VERSION = "1.9.4"
-LAUNCHER_VERSION = "1.9.4"
+APP_VERSION = "1.9.5"
+LAUNCHER_VERSION = "1.9.5"
 LAUNCHER_PROTOCOL = 2
 
 # Notes for the installed version's About view.
 RELEASE_NOTES = (
-    "恢复 1.8.7 的浅色配色，保留新版布局；新增常驻和失败弹窗中的“打开小程序”按钮，桌面直接调用微信，不依赖本地 HTTP，也不修改账号或缓存。",
+    "统一桌面浅色层次：灰色侧栏、白色工作区、深色主按钮和中性选中状态，红绿保留给盈亏与状态；保留原有布局、功能和账号缓存。",
 )
 
 # Ordered release history for the published manifest. The final record must
@@ -40,8 +40,7 @@ RELEASE_HISTORY = (
     {
         "version": "1.8.2",
         "release_notes": (
-            "更换应用图标，桌面程序、安装器和官网统一使用新的视觉标识。",
-            "优化多尺寸图标资源，让任务栏、快捷方式和网页标签在小尺寸下更清晰。",
+            "更换并统一桌面程序、安装器和官网的应用图标，优化多尺寸资源，使任务栏、快捷方式和网页标签的小尺寸图标更清晰。",
         ),
     },
     {
@@ -112,6 +111,12 @@ RELEASE_HISTORY = (
         "release_notes": (
             "修复新版启动后读取版本记录与旧启动器切换冲突导致更新回退；Windows 短暂文件占用支持有限重试，旧版可直接升级。",
             "本地服务启动检查失败时释放该服务并有限重选端口，保留具体错误诊断；浅色、缓存和自动小程序恢复保持不变。",
+        ),
+    },
+    {
+        "version": "1.9.4",
+        "release_notes": (
+            "恢复 1.8.7 的浅色配色，保留新版布局；新增常驻和失败弹窗中的“打开小程序”按钮，桌面直接调用微信，不依赖本地 HTTP，也不修改账号或缓存。",
         ),
     },
     {
