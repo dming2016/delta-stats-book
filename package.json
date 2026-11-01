@@ -7,7 +7,7 @@
     "test:ui": "node tools/verify_ui.cjs --no-assets"
   },
   "devDependencies": {
-    "playwright": "1.63.0",
+    "playwright": "1.64.1",
     "sharp": "0.35.4"
   }
 }
